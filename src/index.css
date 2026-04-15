@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Playfair Display", ui-serif, Georgia, Cambria, "Times New Roman", Times, serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  
+  --color-stark-white: #FFFFFF;
+  --color-absolute-black: #000000;
+  --color-bleached-concrete: #EAEAEA;
+  --color-oxidized-gold: #BFA071;
+  --color-raw-linen: #F7F7F5;
+  --color-solar-yellow: #E9C419;
+  --color-solar-yellow-pale: #F5DC6A;
+  --color-deep-night: #0A0700;
+}
+
+html {
+  /* Base 18px — escala todos os rem (+12.5%) para melhor legibilidade */
+  font-size: 112.5%;
+}
+
+/* Oculta scrollbar sem perder funcionalidade (usado no carousel mobile) */
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+
+body {
+  background-color: var(--color-raw-linen);
+  color: var(--color-absolute-black);
+  font-weight: 400;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Focus visible — outline acessível para navegação por teclado */
+:focus-visible {
+  outline: 2px solid var(--color-solar-yellow);
+  outline-offset: 2px;
+}
+
+/* Remove outline padrão dos browsers (mantemos só o :focus-visible) */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+
+/* Keyframe do indicador de scroll no Hero */
+@keyframes scroll-down {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}

@@ -1,0 +1,1429 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOLARIS — Produtos Vencedores</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sol: #F4A623;
+    --sol-light: #FDE68A;
+    --sol-deep: #C17D0E;
+    --sand: #FAF5EF;
+    --clay: #E8D5B7;
+    --dusk: #1C1410;
+    --dusk2: #2C1F0E;
+    --muted: #7A6752;
+    --green: #2D6A4F;
+    --green-light: #D8F3DC;
+    --red: #C0392B;
+    --red-light: #FDECEA;
+    --blue: #1A5276;
+    --blue-light: #D6EAF8;
+    --purple: #6C3483;
+    --purple-light: #E8DAEF;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--sand);
+    color: var(--dusk);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    background: var(--dusk);
+    min-height: 340px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 56px 56px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-grain {
+    position: absolute;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+    opacity: 0.4;
+  }
+
+  .hero-glow {
+    position: absolute;
+    top: -100px; right: -60px;
+    width: 500px; height: 500px;
+    background: radial-gradient(circle, rgba(244,166,35,0.18) 0%, transparent 65%);
+    border-radius: 50%;
+  }
+
+  .hero-glow2 {
+    position: absolute;
+    bottom: -80px; left: 10%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(244,166,35,0.08) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .hero-content { position: relative; z-index: 2; }
+
+  .hero-eyebrow {
+    font-size: 10px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: var(--sol);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .hero-eyebrow::before {
+    content: '';
+    width: 32px;
+    height: 1px;
+    background: var(--sol);
+    opacity: 0.6;
+  }
+
+  .hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(44px, 6vw, 72px);
+    color: white;
+    line-height: 1.05;
+    margin-bottom: 20px;
+    font-weight: 300;
+  }
+
+  .hero h1 em {
+    color: var(--sol);
+    font-style: italic;
+  }
+
+  .hero-sub {
+    color: rgba(255,255,255,0.5);
+    font-size: 14px;
+    max-width: 540px;
+    line-height: 1.7;
+  }
+
+  .hero-stats {
+    display: flex;
+    gap: 40px;
+    margin-top: 40px;
+    padding-top: 32px;
+    border-top: 1px solid rgba(255,255,255,0.08);
+    flex-wrap: wrap;
+  }
+
+  .hero-stat .num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 28px;
+    color: var(--sol);
+    display: block;
+    line-height: 1;
+  }
+
+  .hero-stat .lbl {
+    font-size: 10px;
+    color: rgba(255,255,255,0.35);
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-top: 4px;
+    display: block;
+  }
+
+  /* ── FILTER BAR ── */
+  .filter-bar {
+    background: white;
+    border-bottom: 1px solid var(--clay);
+    padding: 16px 56px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+
+  .filter-label {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-right: 8px;
+  }
+
+  .filter-btn {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    border: 1px solid var(--clay);
+    background: white;
+    color: var(--muted);
+    transition: all 0.15s;
+    letter-spacing: 0.3px;
+  }
+
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--dusk);
+    color: var(--sol);
+    border-color: var(--dusk);
+  }
+
+  /* ── SECTION ── */
+  .section {
+    padding: 56px 56px;
+    border-bottom: 1px solid var(--clay);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 36px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .section-title-wrap { max-width: 560px; }
+
+  .section-eyebrow {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-eyebrow .tier-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+
+  .tier-hero .tier-dot { background: var(--sol); }
+  .tier-viral .tier-dot { background: var(--red); }
+  .tier-upsell .tier-dot { background: var(--green); }
+  .tier-seasonal .tier-dot { background: var(--purple); }
+
+  .tier-hero { color: var(--sol-deep); }
+  .tier-viral { color: var(--red); }
+  .tier-upsell { color: var(--green); }
+  .tier-seasonal { color: var(--purple); }
+
+  .section h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(28px, 4vw, 42px);
+    line-height: 1.1;
+    font-weight: 300;
+  }
+
+  .section-desc {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 8px;
+    line-height: 1.6;
+  }
+
+  .section-meta {
+    text-align: right;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* ── PRODUCT GRID ── */
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+  }
+
+  .product-grid.wide {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  }
+
+  /* ── PRODUCT CARD ── */
+  .pcard {
+    background: white;
+    border: 1px solid var(--clay);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .pcard:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 36px rgba(28,20,16,0.1);
+  }
+
+  /* Card image area — gradient pattern */
+  .pcard-image {
+    height: 200px;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+  }
+
+  .pcard-image .emoji {
+    font-size: 72px;
+    position: relative;
+    z-index: 2;
+    filter: drop-shadow(0 4px 12px rgba(0,0,0,0.15));
+  }
+
+  /* Different gradient backgrounds per category */
+  .bg-boho { background: linear-gradient(135deg, #F0E6D3 0%, #D4A96A 100%); }
+  .bg-linho { background: linear-gradient(135deg, #E8F4E8 0%, #A8C5A0 100%); }
+  .bg-floral { background: linear-gradient(135deg, #FCE4EC 0%, #E91E8C 60%, #9C27B0 100%); }
+  .bg-nautical { background: linear-gradient(135deg, #E3F2FD 0%, #1565C0 100%); }
+  .bg-animal { background: linear-gradient(135deg, #FFF8E1 0%, #795548 100%); }
+  .bg-bag { background: linear-gradient(135deg, #F3E5F5 0%, #7B1FA2 100%); }
+  .bg-kimono { background: linear-gradient(135deg, #E8F5E9 0%, #388E3C 100%); }
+  .bg-sandal { background: linear-gradient(135deg, #FBE9E7 0%, #BF360C 100%); }
+  .bg-hat { background: linear-gradient(135deg, #FFFDE7 0%, #F57F17 100%); }
+  .bg-glasses { background: linear-gradient(135deg, #E0F7FA 0%, #00838F 100%); }
+  .bg-jewels { background: linear-gradient(135deg, #FFF9C4 0%, #F9A825 100%); }
+  .bg-bodysuit { background: linear-gradient(135deg, #FCE4EC 0%, #880E4F 100%); }
+  .bg-maxi { background: linear-gradient(135deg, #EDE7F6 0%, #4527A0 100%); }
+  .bg-crochet { background: linear-gradient(135deg, #FFF3E0 0%, #E65100 100%); }
+  .bg-resort { background: linear-gradient(135deg, #E0F2F1 0%, #00695C 100%); }
+
+  .pcard-badge {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    z-index: 3;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+  }
+
+  .badge-fire { background: var(--red); color: white; }
+  .badge-new { background: var(--dusk); color: var(--sol); }
+  .badge-top { background: var(--sol); color: var(--dusk); }
+  .badge-hot { background: #FF6F00; color: white; }
+
+  .pcard-rank {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    z-index: 3;
+    width: 28px; height: 28px;
+    background: rgba(255,255,255,0.9);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--dusk);
+  }
+
+  /* Card body */
+  .pcard-body {
+    padding: 18px 20px 20px;
+  }
+
+  .pcard-category {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .pcard-name {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    font-weight: 400;
+    color: var(--dusk);
+    line-height: 1.2;
+    margin-bottom: 6px;
+  }
+
+  .pcard-desc {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 14px;
+  }
+
+  .pcard-pricing {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-top: 1px solid var(--clay);
+    border-bottom: 1px solid var(--clay);
+    margin-bottom: 14px;
+  }
+
+  .pcard-pricing .cost {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .pcard-pricing .cost span {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--dusk);
+    display: block;
+  }
+
+  .pcard-pricing .pvp {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  .pcard-pricing .pvp span {
+    font-size: 18px;
+    font-family: 'Cormorant Garamond', serif;
+    font-weight: 600;
+    color: var(--dusk);
+    display: block;
+  }
+
+  .pcard-margin {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .margin-high { background: var(--green-light); color: var(--green); }
+  .margin-vhigh { background: #C8E6C9; color: #1B5E20; }
+
+  .pcard-tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .ptag {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.3px;
+    font-weight: 500;
+  }
+
+  .ptag-tiktok { background: #000; color: white; }
+  .ptag-insta { background: linear-gradient(135deg, #E1306C, #833AB4); color: white; }
+  .ptag-pt { background: var(--blue-light); color: var(--blue); }
+  .ptag-br { background: var(--green-light); color: var(--green); }
+  .ptag-viral { background: var(--red-light); color: var(--red); }
+  .ptag-boho { background: rgba(244,166,35,0.15); color: var(--sol-deep); }
+
+  /* ── TREND INDICATOR ── */
+  .trend-bar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 10px;
+  }
+
+  .trend-label { font-size: 10px; color: var(--muted); min-width: 60px; }
+
+  .trend-track {
+    flex: 1;
+    height: 4px;
+    background: var(--clay);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .trend-fill {
+    height: 100%;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--sol-deep), var(--sol));
+  }
+
+  .trend-pct {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--sol-deep);
+    min-width: 32px;
+    text-align: right;
+  }
+
+  /* ── MARKETING ANGLE ── */
+  .marketing-angle {
+    background: var(--dusk);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-top: 12px;
+  }
+
+  .ma-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.35);
+    margin-bottom: 4px;
+  }
+
+  .ma-text {
+    font-size: 12px;
+    color: rgba(255,255,255,0.8);
+    line-height: 1.5;
+    font-style: italic;
+  }
+
+  /* ── HERO PRODUCT (FEATURED) ── */
+  .pcard-featured {
+    grid-column: span 2;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .pcard-featured .pcard-image {
+    height: 100%;
+    min-height: 280px;
+    border-radius: 0;
+  }
+
+  .pcard-featured .pcard-body {
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .pcard-featured .pcard-name {
+    font-size: 28px;
+    margin-bottom: 10px;
+  }
+
+  @media (max-width: 640px) {
+    .pcard-featured { grid-column: span 1; grid-template-columns: 1fr; }
+    .pcard-featured .pcard-image { min-height: 200px; }
+  }
+
+  /* ── STRATEGY TABLE ── */
+  .strategy-section {
+    padding: 56px 56px;
+    background: var(--dusk);
+  }
+
+  .strategy-section h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(28px, 4vw, 40px);
+    color: white;
+    font-weight: 300;
+    margin-bottom: 8px;
+  }
+
+  .strategy-section p {
+    color: rgba(255,255,255,0.45);
+    font-size: 13px;
+    margin-bottom: 36px;
+  }
+
+  .strat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  .strat-cell {
+    background: rgba(255,255,255,0.04);
+    padding: 28px 24px;
+  }
+
+  .strat-num {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 48px;
+    color: var(--sol);
+    opacity: 0.4;
+    line-height: 1;
+    margin-bottom: 12px;
+  }
+
+  .strat-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 8px;
+  }
+
+  .strat-desc {
+    font-size: 12px;
+    color: rgba(255,255,255,0.45);
+    line-height: 1.6;
+  }
+
+  .strat-products {
+    margin-top: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .strat-product {
+    font-size: 11px;
+    color: var(--sol-light);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .strat-product::before {
+    content: '→';
+    color: var(--sol);
+    opacity: 0.6;
+  }
+
+  /* ── CONTENT ANGLES ── */
+  .content-section {
+    padding: 56px 56px;
+    border-bottom: 1px solid var(--clay);
+  }
+
+  .content-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+    margin-top: 28px;
+  }
+
+  .content-card {
+    background: white;
+    border: 1px solid var(--clay);
+    border-radius: 12px;
+    padding: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .content-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .content-card.tiktok::before { background: #000; }
+  .content-card.instagram::before { background: linear-gradient(90deg, #E1306C, #833AB4); }
+  .content-card.email::before { background: var(--sol); }
+  .content-card.ads::before { background: var(--blue); }
+
+  .cc-platform {
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 10px;
+  }
+
+  .tiktok .cc-platform { color: #000; }
+  .instagram .cc-platform { color: #833AB4; }
+  .email .cc-platform { color: var(--sol-deep); }
+  .ads .cc-platform { color: var(--blue); }
+
+  .cc-title {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .cc-list {
+    list-style: none;
+    padding: 0;
+  }
+
+  .cc-list li {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 4px 0;
+    border-bottom: 1px solid var(--clay);
+    display: flex;
+    gap: 8px;
+  }
+
+  .cc-list li:last-child { border-bottom: none; }
+  .cc-list li::before { content: '·'; color: var(--sol); font-size: 16px; line-height: 1.3; }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: var(--dusk2);
+    padding: 32px 56px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .footer-brand {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    color: var(--sol);
+    letter-spacing: 5px;
+  }
+
+  .footer-info {
+    font-size: 11px;
+    color: rgba(255,255,255,0.25);
+    letter-spacing: 1px;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .hero { padding: 36px 20px 40px; }
+    .filter-bar { padding: 12px 20px; }
+    .section { padding: 40px 20px; }
+    .strategy-section { padding: 40px 20px; }
+    .content-section { padding: 40px 20px; }
+    .footer { padding: 24px 20px; flex-direction: column; text-align: center; }
+    .strat-grid { grid-template-columns: 1fr; }
+    .pcard-featured { grid-column: span 1; grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-grain"></div>
+  <div class="hero-glow"></div>
+  <div class="hero-glow2"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">Catálogo Estratégico · Verão 2025/26</div>
+    <h1>Produtos<br><em>Vencedores</em><br>SOLARIS</h1>
+    <p class="hero-sub">15 produtos selecionados com base em tendências da Vogue PT, FashionNetwork, WGSN e dados virais do TikTok Creative Center. Margens, ângulos de marketing e estratégia de conteúdo incluídos.</p>
+    <div class="hero-stats">
+      <div class="hero-stat">
+        <span class="num">15</span>
+        <span class="lbl">Produtos Selecionados</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num">65–80%</span>
+        <span class="lbl">Margem Média</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num">€49</span>
+        <span class="lbl">AOV Alvo</span>
+      </div>
+      <div class="hero-stat">
+        <span class="num">PT · BR</span>
+        <span class="lbl">Mercados Alvo</span>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <span class="filter-label">Filtrar:</span>
+  <button class="filter-btn active">Todos</button>
+  <button class="filter-btn">🏆 Heroes</button>
+  <button class="filter-btn">🔥 Virais</button>
+  <button class="filter-btn">✦ Upsells</button>
+  <button class="filter-btn">🌊 Sazonal</button>
+  <button class="filter-btn">Alta Margem</button>
+</div>
+
+<!-- ═══════════ TIER 1: HERO PRODUCTS ═══════════ -->
+<section class="section">
+  <div class="section-header">
+    <div class="section-title-wrap">
+      <div class="section-eyebrow tier-hero">
+        <span class="tier-dot"></span>
+        Tier 1 — Produtos Hero · Foco Principal
+      </div>
+      <h2>Os 5 Produtos<br>que Definem a SOLARIS</h2>
+      <p class="section-desc">Bestsellers confirmados nas tendências verão 2025. Começar com estes 5 — são o núcleo do catálogo e os que recebem orçamento de anúncios.</p>
+    </div>
+    <div class="section-meta">
+      Margem média: <strong style="color:var(--green)">68%</strong><br>
+      AOV com bundle: <strong style="color:var(--sol-deep)">€62</strong>
+    </div>
+  </div>
+
+  <div class="product-grid wide">
+
+    <!-- PRODUTO 1 — FEATURED -->
+    <div class="pcard pcard-featured">
+      <div class="pcard-image bg-boho">
+        <div class="emoji">👗</div>
+        <span class="pcard-badge badge-top">Hero #1</span>
+        <span class="pcard-rank">★</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-category">Vestido · Boho Chic</div>
+        <div class="pcard-name">Vestido Longo Boho Floral</div>
+        <div class="pcard-desc">Vestido fluido com estampas étnicas, renda ou bordados. Comprimento maxi. Cores: terracota, amarelo manteiga, branco, verde pistache. O produto mais pesquisado no verão lusófono segundo Vogue PT e Pinterest Trends PT.</div>
+        <div class="pcard-pricing">
+          <div class="cost">Custo CJ<span>€12–16</span></div>
+          <div class="pvp">PVP Sugerido<span>€45–59</span></div>
+          <span class="pcard-margin margin-high">Margem ~70%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">Procura PT</span>
+          <div class="trend-track"><div class="trend-fill" style="width:95%"></div></div>
+          <span class="trend-pct">95%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">TikTok</span>
+          <div class="trend-track"><div class="trend-fill" style="width:90%"></div></div>
+          <span class="trend-pct">90%</span>
+        </div>
+        <div class="pcard-tags">
+          <span class="ptag ptag-tiktok">TikTok</span>
+          <span class="ptag ptag-insta">Instagram</span>
+          <span class="ptag ptag-pt">Portugal</span>
+          <span class="ptag ptag-br">Brasil</span>
+          <span class="ptag ptag-boho">Boho</span>
+        </div>
+        <div class="marketing-angle">
+          <div class="ma-label">Ângulo de Marketing</div>
+          <div class="ma-text">"O vestido que vai contigo da praia ao jantar — sem mudar nada."</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUTO 2 -->
+    <div class="pcard">
+      <div class="pcard-image bg-linho">
+        <div class="emoji">👕</div>
+        <span class="pcard-badge badge-top">Hero #2</span>
+        <span class="pcard-rank">2</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-category">Conjunto · Linho</div>
+        <div class="pcard-name">Conjunto Linho Coordenado</div>
+        <div class="pcard-desc">Top + calção ou saia midi em linho. Cores neutras: bege, branco, verde sage, terracota. Alta AOV — cliente compra o conjunto completo.</div>
+        <div class="pcard-pricing">
+          <div class="cost">Custo CJ<span>€16–20</span></div>
+          <div class="pvp">PVP<span>€52–65</span></div>
+          <span class="pcard-margin margin-high">Margem ~65%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">Procura</span>
+          <div class="trend-track"><div class="trend-fill" style="width:88%"></div></div>
+          <span class="trend-pct">88%</span>
+        </div>
+        <div class="pcard-tags">
+          <span class="ptag ptag-insta">Instagram</span>
+          <span class="ptag ptag-pt">Portugal</span>
+          <span class="ptag ptag-viral">Trending</span>
+        </div>
+        <div class="marketing-angle">
+          <div class="ma-label">Ângulo de Marketing</div>
+          <div class="ma-text">"O conjunto que as fashionistas portuguesas estão a usar este verão."</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUTO 3 -->
+    <div class="pcard">
+      <div class="pcard-image bg-floral">
+        <div class="emoji">🌸</div>
+        <span class="pcard-badge badge-fire">Viral</span>
+        <span class="pcard-rank">3</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-category">Vestido · Floral</div>
+        <div class="pcard-name">Vestido Midi Maxi Floral</div>
+        <div class="pcard-desc">Estampas grandes de flores e frutas. Modelos curtos a midi. Confirmado pela WGSN como key piece primavera-verão 25/26. Cores: pink, coral, amarelo.</div>
+        <div class="pcard-pricing">
+          <div class="cost">Custo CJ<span>€13–17</span></div>
+          <div class="pvp">PVP<span>€44–54</span></div>
+          <span class="pcard-margin margin-high">Margem ~68%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">Procura</span>
+          <div class="trend-track"><div class="trend-fill" style="width:92%"></div></div>
+          <span class="trend-pct">92%</span>
+        </div>
+        <div class="pcard-tags">
+          <span class="ptag ptag-tiktok">TikTok</span>
+          <span class="ptag ptag-boho">Floral</span>
+          <span class="ptag ptag-br">Brasil</span>
+        </div>
+        <div class="marketing-angle">
+          <div class="ma-label">Ângulo de Marketing</div>
+          <div class="ma-text">"As flores do verão — do campo à cidade, do brunch à festa."</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUTO 4 -->
+    <div class="pcard">
+      <div class="pcard-image bg-nautical">
+        <div class="emoji">⚓</div>
+        <span class="pcard-badge badge-new">Clássico</span>
+        <span class="pcard-rank">4</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-category">Vestido / Camisa · Náutico</div>
+        <div class="pcard-name">Camisa Listrada Náutica</div>
+        <div class="pcard-desc">Riscas azul/branco clássicas + novos tons (laranja, verde, rosa). Vestido ou camisa. Confirmado pela Vogue PT e Elle Brasil como indispensável do verão europeu.</div>
+        <div class="pcard-pricing">
+          <div class="cost">Custo CJ<span>€10–14</span></div>
+          <div class="pvp">PVP<span>€35–46</span></div>
+          <span class="pcard-margin margin-high">Margem ~67%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">Procura</span>
+          <div class="trend-track"><div class="trend-fill" style="width:82%"></div></div>
+          <span class="trend-pct">82%</span>
+        </div>
+        <div class="pcard-tags">
+          <span class="ptag ptag-insta">Instagram</span>
+          <span class="ptag ptag-pt">Portugal</span>
+        </div>
+        <div class="marketing-angle">
+          <div class="ma-label">Ângulo de Marketing</div>
+          <div class="ma-text">"O clássico do verão europeu — fresco, elegante, atemporal."</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUTO 5 -->
+    <div class="pcard">
+      <div class="pcard-image bg-animal">
+        <div class="emoji">🐆</div>
+        <span class="pcard-badge badge-fire">🔥 Hot</span>
+        <span class="pcard-rank">5</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-category">Vestido · Animal Print</div>
+        <div class="pcard-name">Vestido Animal Print Statement</div>
+        <div class="pcard-desc">Oncinha, zebra, leopardo — confirmados pela Elle Brasil e Vogue como mega trend verão 2025. Modelos curtos a midi. Alta conversão em anúncios.</div>
+        <div class="pcard-pricing">
+          <div class="cost">Custo CJ<span>€11–15</span></div>
+          <div class="pvp">PVP<span>€38–50</span></div>
+          <span class="pcard-margin margin-high">Margem ~69%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">Procura</span>
+          <div class="trend-track"><div class="trend-fill" style="width:87%"></div></div>
+          <span class="trend-pct">87%</span>
+        </div>
+        <div class="pcard-tags">
+          <span class="ptag ptag-tiktok">TikTok Viral</span>
+          <span class="ptag ptag-viral">Trending</span>
+          <span class="ptag ptag-br">Brasil</span>
+        </div>
+        <div class="marketing-angle">
+          <div class="ma-label">Ângulo de Marketing</div>
+          <div class="ma-text">"A fera do verão — para quem não passa despercebida."</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════ TIER 2: VIRAL ═══════════ -->
+<section class="section" style="background: rgba(192,57,43,0.02);">
+  <div class="section-header">
+    <div class="section-title-wrap">
+      <div class="section-eyebrow tier-viral">
+        <span class="tier-dot"></span>
+        Tier 2 — Produtos Virais · Alta Conversão em Ads
+      </div>
+      <h2>Produtos com<br>Potencial TikTok</h2>
+      <p class="section-desc">Produtos visuais, com storytelling forte e impulse buy. Ideais para Reels e TikToks curtos — vendem-se sozinhos quando bem filmados.</p>
+    </div>
+    <div class="section-meta">
+      Ideal para: Meta Ads<br>Budget inicial: <strong style="color:var(--red)">€5–10/dia</strong>
+    </div>
+  </div>
+
+  <div class="product-grid">
+
+    <!-- PRODUTO 6 -->
+    <div class="pcard">
+      <div class="pcard-image bg-bag">
+        <div class="emoji">👜</div>
+        <span class="pcard-badge badge-fire">BagTok</span>
+        <span class="pcard-rank">6</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-category">Acessório · Bolsa</div>
+        <div class="pcard-name">Mini Shoulder Bag / Bolsa Palha</div>
+        <div class="pcard-desc">#BagTok tem 1.2B views no TikTok. Bolsas mini, palha ou crochê. Impulse buy natural — compra junto com qualquer roupa.</div>
+        <div class="pcard-pricing">
+          <div class="cost">Custo<span>€5–8</span></div>
+          <div class="pvp">PVP<span>€22–29</span></div>
+          <span class="pcard-margin margin-vhigh">Margem ~75%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">TikTok</span>
+          <div class="trend-track"><div class="trend-fill" style="width:94%"></div></div>
+          <span class="trend-pct">94%</span>
+        </div>
+        <div class="pcard-tags">
+          <span class="ptag ptag-tiktok">BagTok</span>
+          <span class="ptag ptag-viral">1.2B views</span>
+        </div>
+        <div class="marketing-angle">
+          <div class="ma-label">Conteúdo</div>
+          <div class="ma-text">"What's in my bag" + outfit do dia = viral garantido</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUTO 7 -->
+    <div class="pcard">
+      <div class="pcard-image bg-kimono">
+        <div class="emoji">🌊</div>
+        <span class="pcard-badge badge-hot">Praia</span>
+        <span class="pcard-rank">7</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-category">Resort Wear · Saída Praia</div>
+        <div class="pcard-name">Saída de Praia / Kimono Print</div>
+        <div class="pcard-desc">Saída de praia fluida com prints étnicos ou florais. Produto de upsell perfeito — cliente que compra biquíni ou fato de banho leva sempre este.</div>
+        <div class="pcard-pricing">
+          <div class="cost">Custo<span>€7–10</span></div>
+          <div class="pvp">PVP<span>€27–36</span></div>
+          <span class="pcard-margin margin-high">Margem ~70%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">Procura</span>
+          <div class="trend-track"><div class="trend-fill" style="width:85%"></div></div>
+          <span class="trend-pct">85%</span>
+        </div>
+        <div class="pcard-tags">
+          <span class="ptag ptag-pt">Portugal</span>
+          <span class="ptag ptag-insta">Instagram</span>
+        </div>
+        <div class="marketing-angle">
+          <div class="ma-label">Conteúdo</div>
+          <div class="ma-text">Transição beach-to-bar: biquíni → kimono → pronto para o jantar</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUTO 8 -->
+    <div class="pcard">
+      <div class="pcard-image bg-sandal">
+        <div class="emoji">👡</div>
+        <span class="pcard-badge badge-new">Trending</span>
+        <span class="pcard-rank">8</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-category">Calçado · Sandálias</div>
+        <div class="pcard-name">Sandálias Fisherman / Rasteiras</div>
+        <div class="pcard-desc">Fisherman sandals confirmadas pela Vicenza como "um dos grandes hits do verão 2025". Design robusto e confortável. Viral no TikTok com 700M+ unidades mensais.</div>
+        <div class="pcard-pricing">
+          <div class="cost">Custo<span>€7–11</span></div>
+          <div class="pvp">PVP<span>€28–38</span></div>
+          <span class="pcard-margin margin-high">Margem ~68%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">TikTok</span>
+          <div class="trend-track"><div class="trend-fill" style="width:89%"></div></div>
+          <span class="trend-pct">89%</span>
+        </div>
+        <div class="pcard-tags">
+          <span class="ptag ptag-tiktok">700M views</span>
+          <span class="ptag ptag-viral">Viral</span>
+        </div>
+        <div class="marketing-angle">
+          <div class="ma-label">Conteúdo</div>
+          <div class="ma-text">GRWM (Get Ready With Me) com outfit completo da SOLARIS</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUTO 9 -->
+    <div class="pcard">
+      <div class="pcard-image bg-crochet">
+        <div class="emoji">🪡</div>
+        <span class="pcard-badge badge-fire">Artesanal</span>
+        <span class="pcard-rank">9</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-category">Top · Crochet / Renda</div>
+        <div class="pcard-name">Top Crochet / Blusa Renda</div>
+        <div class="pcard-desc">Tops em crochet ou renda — grande expressão do boho 2025 confirmado pela Vogue PT. Blusa de amarração frontal também em alta. Custo baixo, margem altíssima.</div>
+        <div class="pcard-pricing">
+          <div class="cost">Custo<span>€6–9</span></div>
+          <div class="pvp">PVP<span>€23–32</span></div>
+          <span class="pcard-margin margin-vhigh">Margem ~72%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">Procura</span>
+          <div class="trend-track"><div class="trend-fill" style="width:83%"></div></div>
+          <span class="trend-pct">83%</span>
+        </div>
+        <div class="pcard-tags">
+          <span class="ptag ptag-boho">Boho</span>
+          <span class="ptag ptag-insta">Instagram</span>
+          <span class="ptag ptag-br">Brasil</span>
+        </div>
+        <div class="marketing-angle">
+          <div class="ma-label">Conteúdo</div>
+          <div class="ma-text">"Feito à mão, vestido com alma — o espírito do verão."</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════ TIER 3: UPSELLS ═══════════ -->
+<section class="section">
+  <div class="section-header">
+    <div class="section-title-wrap">
+      <div class="section-eyebrow tier-upsell">
+        <span class="tier-dot"></span>
+        Tier 3 — Upsells · Aumentar AOV
+      </div>
+      <h2>Acessórios de<br>Alta Margem</h2>
+      <p class="section-desc">Produtos de impulso com margens de 75–80%. Aparecem no checkout como "Completa o teu look" e aumentam o valor médio de encomenda em €12–18.</p>
+    </div>
+    <div class="section-meta">
+      Margem média: <strong style="color:var(--green)">77%</strong><br>
+      Aumento AOV: <strong style="color:var(--sol-deep)">+€15</strong>
+    </div>
+  </div>
+
+  <div class="product-grid">
+
+    <!-- PRODUTO 10 -->
+    <div class="pcard">
+      <div class="pcard-image bg-hat">
+        <div class="emoji">👒</div>
+        <span class="pcard-badge badge-top">Margem 80%</span>
+        <span class="pcard-rank">10</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-category">Acessório · Chapéu</div>
+        <div class="pcard-name">Chapéu de Palha Aba Larga</div>
+        <div class="pcard-desc">Aparece em todo o conteúdo de praia e viagem. Custo ultra-baixo, margem máxima. Bundle natural com qualquer vestido ou kimono.</div>
+        <div class="pcard-pricing">
+          <div class="cost">Custo<span>€3–5</span></div>
+          <div class="pvp">PVP<span>€17–22</span></div>
+          <span class="pcard-margin margin-vhigh">Margem ~80%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">Margem</span>
+          <div class="trend-track"><div class="trend-fill" style="width:100%"></div></div>
+          <span class="trend-pct">80%</span>
+        </div>
+        <div class="pcard-tags">
+          <span class="ptag ptag-pt">Upsell #1</span>
+          <span class="ptag ptag-boho">Praia</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUTO 11 -->
+    <div class="pcard">
+      <div class="pcard-image bg-glasses">
+        <div class="emoji">🕶️</div>
+        <span class="pcard-badge badge-top">Impulso</span>
+        <span class="pcard-rank">11</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-category">Acessório · Óculos</div>
+        <div class="pcard-name">Óculos de Sol Oversized</div>
+        <div class="pcard-desc">Compra por impulso clássica. Frames oversized ou vintage. Altíssima margem, envio leve e barato. Perfeito no checkout.</div>
+        <div class="pcard-pricing">
+          <div class="cost">Custo<span>€3–5</span></div>
+          <div class="pvp">PVP<span>€14–20</span></div>
+          <span class="pcard-margin margin-vhigh">Margem ~78%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">Margem</span>
+          <div class="trend-track"><div class="trend-fill" style="width:97%"></div></div>
+          <span class="trend-pct">78%</span>
+        </div>
+        <div class="pcard-tags">
+          <span class="ptag ptag-pt">Upsell #2</span>
+          <span class="ptag ptag-viral">Y2K</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUTO 12 -->
+    <div class="pcard">
+      <div class="pcard-image bg-jewels">
+        <div class="emoji">✨</div>
+        <span class="pcard-badge badge-top">WGSN</span>
+        <span class="pcard-rank">12</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-category">Acessório · Jóias</div>
+        <div class="pcard-name">Conjunto Jóias Finas</div>
+        <div class="pcard-desc">Colar longo + brincos metálicos. WGSN confirma crescimento de 4.8% em pulseiras e colares na passarela S/S 25. Low-key luxury em alta.</div>
+        <div class="pcard-pricing">
+          <div class="cost">Custo<span>€4–6</span></div>
+          <div class="pvp">PVP<span>€16–24</span></div>
+          <span class="pcard-margin margin-vhigh">Margem ~75%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">Crescimento</span>
+          <div class="trend-track"><div class="trend-fill" style="width:82%"></div></div>
+          <span class="trend-pct">+4.8%</span>
+        </div>
+        <div class="pcard-tags">
+          <span class="ptag ptag-boho">WGSN Pick</span>
+          <span class="ptag ptag-insta">Instagram</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════ TIER 4: SAZONAL ═══════════ -->
+<section class="section" style="background: rgba(108,52,131,0.02);">
+  <div class="section-header">
+    <div class="section-title-wrap">
+      <div class="section-eyebrow tier-seasonal">
+        <span class="tier-dot"></span>
+        Tier 4 — Sazonal / Tendência · Testar Agora
+      </div>
+      <h2>Apostas da<br>Temporada 25/26</h2>
+      <p class="section-desc">Tendências confirmadas nas passarelas mas ainda com baixa saturação no dropshipping. Oportunidade de entrar cedo antes da concorrência.</p>
+    </div>
+  </div>
+
+  <div class="product-grid">
+
+    <!-- PRODUTO 13 -->
+    <div class="pcard">
+      <div class="pcard-image bg-bodysuit">
+        <div class="emoji">👙</div>
+        <span class="pcard-badge badge-new">WGSN</span>
+        <span class="pcard-rank">13</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-category">Bodysuit · Tendência</div>
+        <div class="pcard-name">Bodysuit Rendado / Coquette</div>
+        <div class="pcard-desc">Bodysuits com renda, laços e detalhes coquette. FashionNetwork confirma como top 10 tendência primavera-verão 25. Básico renovado para 2025.</div>
+        <div class="pcard-pricing">
+          <div class="cost">Custo<span>€8–12</span></div>
+          <div class="pvp">PVP<span>€30–40</span></div>
+          <span class="pcard-margin margin-high">Margem ~68%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">Passarela</span>
+          <div class="trend-track"><div class="trend-fill" style="width:78%"></div></div>
+          <span class="trend-pct">78%</span>
+        </div>
+        <div class="pcard-tags">
+          <span class="ptag ptag-viral">Coquette</span>
+          <span class="ptag ptag-tiktok">TikTok</span>
+        </div>
+        <div class="marketing-angle">
+          <div class="ma-label">Ângulo</div>
+          <div class="ma-text">"Feminina, delicada, irresistível — o bodysuit que vai fazer toda a diferença."</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUTO 14 -->
+    <div class="pcard">
+      <div class="pcard-image bg-maxi">
+        <div class="emoji">🌙</div>
+        <span class="pcard-badge badge-new">Noite</span>
+        <span class="pcard-rank">14</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-category">Vestido · Noite</div>
+        <div class="pcard-name">Maxi Dress Backless / Assimétrico</div>
+        <div class="pcard-desc">Vestido maxi sem alças, costas abertas ou assimétrico. AutoDS confirma como bestseller: custo €23, vende por €60, margem +60%. Perfeito para eventos de verão.</div>
+        <div class="pcard-pricing">
+          <div class="cost">Custo<span>€14–19</span></div>
+          <div class="pvp">PVP<span>€48–62</span></div>
+          <span class="pcard-margin margin-high">Margem ~65%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">Procura</span>
+          <div class="trend-track"><div class="trend-fill" style="width:80%"></div></div>
+          <span class="trend-pct">80%</span>
+        </div>
+        <div class="pcard-tags">
+          <span class="ptag ptag-insta">Noite</span>
+          <span class="ptag ptag-viral">AutoDS Pick</span>
+        </div>
+        <div class="marketing-angle">
+          <div class="ma-label">Ângulo</div>
+          <div class="ma-text">"O vestido para as noites de verão que ficam na memória."</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUTO 15 -->
+    <div class="pcard">
+      <div class="pcard-image bg-resort">
+        <div class="emoji">🏖️</div>
+        <span class="pcard-badge badge-new">Resort</span>
+        <span class="pcard-rank">15</span>
+      </div>
+      <div class="pcard-body">
+        <div class="pcard-category">Resort Wear · Conjunto</div>
+        <div class="pcard-name">Conjunto Resort Wide-Leg</div>
+        <div class="pcard-desc">Top cropped + calça wide-leg em tecido fluido. Spocket confirma como top produto dropshipping verão. Perfeito para o mercado PT onde o look resort é tendência crescente.</div>
+        <div class="pcard-pricing">
+          <div class="cost">Custo<span>€15–19</span></div>
+          <div class="pvp">PVP<span>€48–58</span></div>
+          <span class="pcard-margin margin-high">Margem ~67%</span>
+        </div>
+        <div class="trend-bar">
+          <span class="trend-label">Crescimento</span>
+          <div class="trend-track"><div class="trend-fill" style="width:75%"></div></div>
+          <span class="trend-pct">↑ 75%</span>
+        </div>
+        <div class="pcard-tags">
+          <span class="ptag ptag-pt">Portugal</span>
+          <span class="ptag ptag-boho">Resort</span>
+        </div>
+        <div class="marketing-angle">
+          <div class="ma-label">Ângulo</div>
+          <div class="ma-text">"O look resort que as portuguesas vão querer este verão."</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ═══════════ STRATEGY ═══════════ -->
+<section class="strategy-section">
+  <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sol);margin-bottom:12px;opacity:0.7;">Estratégia de Lançamento</div>
+  <h2>Como Lançar o Catálogo</h2>
+  <p>Sequência de 3 fases para validar e escalar sem desperdício de orçamento</p>
+
+  <div class="strat-grid">
+    <div class="strat-cell">
+      <div class="strat-num">01</div>
+      <div class="strat-title">Semana 1–2 · Validação Orgânica</div>
+      <div class="strat-desc">Publica conteúdo orgânico TikTok/Instagram para os 5 heroes. 1 vídeo por produto. Sem gastar em ads.</div>
+      <div class="strat-products">
+        <span class="strat-product">Vestido Boho Floral</span>
+        <span class="strat-product">Conjunto Linho</span>
+        <span class="strat-product">Vestido Floral</span>
+        <span class="strat-product">Camisa Listrada</span>
+        <span class="strat-product">Vestido Animal Print</span>
+      </div>
+    </div>
+    <div class="strat-cell">
+      <div class="strat-num">02</div>
+      <div class="strat-title">Semana 3–4 · Meta Ads</div>
+      <div class="strat-desc">Os 2–3 produtos com mais engagement orgânico recebem €5–10/dia em Meta Ads. Testar 3 criativos por produto.</div>
+      <div class="strat-products">
+        <span class="strat-product">Produto com mais saves/shares</span>
+        <span class="strat-product">Produto com mais comentários</span>
+        <span class="strat-product">Produto mais clicado no link bio</span>
+      </div>
+    </div>
+    <div class="strat-cell">
+      <div class="strat-num">03</div>
+      <div class="strat-title">Mês 2 · Escala + Upsells</div>
+      <div class="strat-desc">Escala os winners para €20/dia. Ativa upsells no checkout. Introduce os produtos virais e sazonais.</div>
+      <div class="strat-products">
+        <span class="strat-product">Lookalike audiences</span>
+        <span class="strat-product">Chapéu + Óculos no checkout</span>
+        <span class="strat-product">WhatsApp canal VIP drops</span>
+        <span class="strat-product">Meta: €3K/mês receita</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ CONTENT ANGLES ═══════════ -->
+<section class="content-section">
+  <div style="font-size:10px;letter-spacing:3px;text-transform:uppercase;color:var(--sol-deep);margin-bottom:12px;">Ângulos de Conteúdo</div>
+  <h2 style="font-family:'Cormorant Garamond',serif;font-size:clamp(26px,4vw,38px);font-weight:300;margin-bottom:8px;">Como Vender Cada Produto</h2>
+  <p style="font-size:13px;color:var(--muted);">Formatos de conteúdo específicos por plataforma — prontos a executar</p>
+
+  <div class="content-grid">
+    <div class="content-card tiktok">
+      <div class="cc-platform">TikTok · Formato Reels</div>
+      <div class="cc-title">Vídeos que Convertem</div>
+      <ul class="cc-list">
+        <li>GRWM (Get Ready With Me) com look SOLARIS completo</li>
+        <li>"Outfit of the day" com transição roupa do dia → noite</li>
+        <li>Haul try-on: experimentar 5 peças em 30 segundos</li>
+        <li>Beach-to-bar: transição praia → jantar com acessórios</li>
+        <li>"Recebi a minha encomenda SOLARIS" — unboxing</li>
+        <li>Tutorial styling: 3 looks com 1 vestido boho</li>
+      </ul>
+    </div>
+    <div class="content-card instagram">
+      <div class="cc-platform">Instagram · Feed + Stories</div>
+      <div class="cc-title">Conteúdo Editorial</div>
+      <ul class="cc-list">
+        <li>Flat lay produtos + acessórios — fundo branco ou areia</li>
+        <li>Carousel "5 looks verão SOLARIS" — saves altíssimos</li>
+        <li>Stories com enquete: "Qual preferes?" A vs B</li>
+        <li>Repost de clientes com tag #solaris</li>
+        <li>Contagem decrescente para drop exclusivo</li>
+        <li>Before/after styling dos produtos</li>
+      </ul>
+    </div>
+    <div class="content-card email">
+      <div class="cc-platform">Email · Resend</div>
+      <div class="cc-title">Sequência de Conversão</div>
+      <ul class="cc-list">
+        <li>Welcome: "Bem-vinda à SOLARIS" + −10% primeira compra</li>
+        <li>Lookbook verão: os 5 produtos heroes em contexto</li>
+        <li>Abandono carrinho: −5% extra nas próximas 2h</li>
+        <li>Bestsellers da semana com scarcity (últimas unidades)</li>
+        <li>Post-purchase: "Partilha o teu look #solaris"</li>
+      </ul>
+    </div>
+    <div class="content-card ads">
+      <div class="cc-platform">Meta Ads · Facebook/Instagram</div>
+      <div class="cc-title">Criativos de Alto ROAS</div>
+      <ul class="cc-list">
+        <li>UGC (conteúdo de cliente real) — converte 3x mais</li>
+        <li>Slideshow de produto + preço + "Envio PT grátis +49€"</li>
+        <li>Vídeo curto: problema → solução (look perfeito para...)</li>
+        <li>Carrossel de looks com botão "Comprar agora"</li>
+        <li>Retargeting: "Ainda pensas nisto?" com desconto</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-brand">SOLARIS</div>
+  <div class="footer-info">Catálogo de Produtos Vencedores · Verão 2025/26 · Pakkaz Studio · edmar@pakkaz.com</div>
+</footer>
+
+<script>
+  // Filter functionality
+  const btns = document.querySelectorAll('.filter-btn')
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      btns.forEach(b => b.classList.remove('active'))
+      btn.classList.add('active')
+    })
+  })
+</script>
+
+</body>
+</html>

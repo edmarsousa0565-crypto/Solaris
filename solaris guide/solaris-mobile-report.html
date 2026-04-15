@@ -1,0 +1,1324 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOLARIS — Relatório Mobile & Performance</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --sol: #F4A623;
+    --sol-light: #FDE68A;
+    --sol-deep: #C17D0E;
+    --sand: #FAF5EF;
+    --clay: #E8D5B7;
+    --dusk: #1C1410;
+    --muted: #7A6752;
+    --green: #2D6A4F;
+    --green-light: #D8F3DC;
+    --red: #C0392B;
+    --red-light: #FDECEA;
+    --orange: #E67E22;
+    --orange-light: #FDEBD0;
+    --blue: #1A5276;
+    --blue-light: #D6EAF8;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--sand);
+    color: var(--dusk);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: fixed;
+    top: 0; left: 0;
+    width: 230px;
+    height: 100vh;
+    background: var(--dusk);
+    overflow-y: auto;
+    z-index: 100;
+    padding: 28px 0 40px;
+  }
+
+  .sidebar-brand {
+    padding: 0 20px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    margin-bottom: 16px;
+  }
+
+  .sidebar-brand h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    color: var(--sol);
+    letter-spacing: 5px;
+    font-weight: 300;
+  }
+
+  .sidebar-brand p {
+    font-size: 9px;
+    color: rgba(255,255,255,0.3);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+  }
+
+  .nav-group { padding: 0 12px; margin-bottom: 6px; }
+
+  .nav-label {
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.2);
+    padding: 6px 8px 4px;
+    display: block;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 7px 10px;
+    color: rgba(255,255,255,0.5);
+    text-decoration: none;
+    font-size: 12px;
+    border-radius: 6px;
+    transition: all 0.15s;
+    cursor: pointer;
+  }
+
+  .nav-item:hover { background: rgba(244,166,35,0.1); color: var(--sol); }
+
+  .nav-dot {
+    width: 7px; height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .dot-red { background: var(--red); }
+  .dot-orange { background: var(--orange); }
+  .dot-green { background: var(--green); }
+  .dot-sol { background: var(--sol); }
+
+  /* MAIN */
+  .main { margin-left: 230px; }
+
+  /* HERO */
+  .hero {
+    background: var(--dusk);
+    padding: 56px 52px 48px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: -80px; right: -80px;
+    width: 350px; height: 350px;
+    background: radial-gradient(circle, rgba(244,166,35,0.18) 0%, transparent 70%);
+    border-radius: 50%;
+  }
+
+  .hero-tag {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--sol);
+    margin-bottom: 14px;
+    position: relative;
+  }
+
+  .hero h1 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(36px, 5vw, 58px);
+    color: white;
+    line-height: 1.1;
+    margin-bottom: 14px;
+    position: relative;
+  }
+
+  .hero h1 span { color: var(--sol); }
+
+  .hero p {
+    color: rgba(255,255,255,0.55);
+    font-size: 14px;
+    max-width: 500px;
+    position: relative;
+  }
+
+  /* SCORES */
+  .scores-bar {
+    background: white;
+    border-bottom: 1px solid var(--clay);
+    padding: 24px 52px;
+    display: flex;
+    gap: 32px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  .score-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .score-circle {
+    width: 72px; height: 72px;
+    border-radius: 50%;
+    border: 4px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 26px;
+    font-weight: 600;
+  }
+
+  .score-circle.red { border-color: var(--red); color: var(--red); }
+  .score-circle.orange { border-color: var(--orange); color: var(--orange); }
+  .score-circle.green { border-color: var(--green); color: var(--green); }
+
+  .score-label {
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    text-align: center;
+  }
+
+  /* METRICS */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin: 20px 0;
+  }
+
+  .metric-card {
+    background: white;
+    border: 1px solid var(--clay);
+    border-radius: 10px;
+    padding: 18px;
+  }
+
+  .metric-card.bad { border-left: 4px solid var(--red); }
+  .metric-card.ok { border-left: 4px solid var(--orange); }
+  .metric-card.good { border-left: 4px solid var(--green); }
+
+  .metric-name { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .metric-val { font-family: 'Cormorant Garamond', serif; font-size: 32px; font-weight: 600; line-height: 1; }
+  .metric-val.bad { color: var(--red); }
+  .metric-val.ok { color: var(--orange); }
+  .metric-val.good { color: var(--green); }
+  .metric-sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  /* SECTIONS */
+  .section {
+    padding: 48px 52px;
+    border-bottom: 1px solid var(--clay);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 28px;
+  }
+
+  .section-num {
+    width: 42px; height: 42px;
+    background: var(--dusk);
+    color: var(--sol);
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 20px;
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .label-red { color: var(--red); }
+  .label-orange { color: var(--orange); }
+  .label-green { color: var(--green); }
+
+  .section h2 {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: clamp(22px, 3vw, 32px);
+    color: var(--dusk);
+    line-height: 1.15;
+  }
+
+  h3 {
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--dusk);
+    margin: 28px 0 12px;
+  }
+
+  p { color: #3D3128; margin-bottom: 12px; }
+
+  /* FIX CARDS */
+  .fix-list { list-style: none; padding: 0; }
+
+  .fix-item {
+    background: white;
+    border: 1px solid var(--clay);
+    border-radius: 10px;
+    padding: 20px 22px;
+    margin-bottom: 14px;
+  }
+
+  .fix-item.critical { border-left: 4px solid var(--red); }
+  .fix-item.important { border-left: 4px solid var(--orange); }
+  .fix-item.nice { border-left: 4px solid var(--blue); }
+
+  .fix-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .fix-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+
+  .badge-red { background: var(--red-light); color: var(--red); }
+  .badge-orange { background: var(--orange-light); color: var(--orange); }
+  .badge-blue { background: var(--blue-light); color: var(--blue); }
+  .badge-green { background: var(--green-light); color: var(--green); }
+
+  .fix-title { font-size: 15px; font-weight: 600; }
+  .fix-saving { font-size: 12px; color: var(--green); font-weight: 600; margin-left: auto; white-space: nowrap; }
+
+  .fix-desc { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+
+  /* CODE */
+  .code-block {
+    background: #0D0A06;
+    border-radius: 8px;
+    padding: 18px 20px;
+    overflow-x: auto;
+    position: relative;
+  }
+
+  .code-label {
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(244,166,35,0.5);
+    margin-bottom: 8px;
+  }
+
+  .code-block pre {
+    font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    font-size: 12px;
+    line-height: 1.7;
+    color: rgba(255,255,255,0.82);
+    white-space: pre;
+  }
+
+  .c { color: rgba(244,166,35,0.55); } /* comment */
+  .k { color: #7DD3FC; } /* keyword */
+  .s { color: #86EFAC; } /* string */
+  .f { color: #FCA5A5; } /* function/tag */
+  .p { color: #E879F9; } /* property */
+  .n { color: #FDE68A; } /* number/value */
+
+  /* BEFORE/AFTER */
+  .diff-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 14px 0;
+  }
+
+  .diff-box { border-radius: 8px; overflow: hidden; }
+
+  .diff-header {
+    padding: 8px 16px;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  .diff-before .diff-header { background: var(--red-light); color: var(--red); }
+  .diff-after .diff-header { background: var(--green-light); color: var(--green); }
+
+  .diff-before .code-block { border-top-left-radius: 0; border-top-right-radius: 0; }
+  .diff-after .code-block { border-top-left-radius: 0; border-top-right-radius: 0; }
+
+  /* TABLE */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--clay);
+    margin: 16px 0;
+  }
+
+  .data-table th {
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 12px 16px;
+    background: var(--sand);
+    border-bottom: 1px solid var(--clay);
+  }
+
+  .data-table td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #F0E8DC;
+    vertical-align: top;
+  }
+
+  .data-table tr:last-child td { border-bottom: none; }
+
+  /* CHECKLIST */
+  .checklist { list-style: none; padding: 0; }
+
+  .check-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--clay);
+    font-size: 14px;
+  }
+
+  .check-item:last-child { border-bottom: none; }
+
+  .check-box {
+    width: 22px; height: 22px;
+    border-radius: 5px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .check-week1 { background: var(--red-light); color: var(--red); }
+  .check-week2 { background: var(--orange-light); color: var(--orange); }
+
+  .check-content strong { display: block; margin-bottom: 2px; }
+  .check-content span { font-size: 12px; color: var(--muted); }
+
+  /* IMPACT BAR */
+  .impact-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--clay);
+  }
+
+  .impact-row:last-child { border-bottom: none; }
+  .impact-label { font-size: 13px; min-width: 200px; }
+  .impact-track { flex: 1; height: 6px; background: var(--clay); border-radius: 3px; overflow: hidden; }
+  .impact-fill { height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--sol-deep), var(--sol)); }
+  .impact-score { font-size: 12px; font-weight: 600; color: var(--sol-deep); min-width: 40px; text-align: right; }
+
+  /* ALERT BOX */
+  .alert {
+    padding: 14px 18px;
+    border-radius: 8px;
+    margin: 16px 0;
+    font-size: 13px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .alert-red { background: var(--red-light); border-left: 3px solid var(--red); color: var(--red); }
+  .alert-orange { background: var(--orange-light); border-left: 3px solid var(--orange); color: var(--orange); }
+  .alert-green { background: var(--green-light); border-left: 3px solid var(--green); color: var(--green); }
+  .alert strong { font-weight: 700; }
+
+  /* FOOTER */
+  .footer {
+    background: var(--dusk);
+    color: rgba(255,255,255,0.3);
+    padding: 28px 52px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .footer strong { color: var(--sol); }
+
+  @media (max-width: 768px) {
+    .sidebar { display: none; }
+    .main { margin-left: 0; }
+    .section { padding: 32px 20px; }
+    .hero { padding: 40px 20px; }
+    .scores-bar { padding: 20px; }
+    .diff-grid { grid-template-columns: 1fr; }
+    .metrics-grid { grid-template-columns: 1fr 1fr; }
+    .footer { padding: 24px 20px; flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<nav class="sidebar">
+  <div class="sidebar-brand">
+    <h1>SOLARIS</h1>
+    <p>Mobile Report · Abril 2026</p>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-label">Scores</span>
+    <a class="nav-item" href="#scores">
+      <span class="nav-dot dot-red"></span> Desempenho — 62
+    </a>
+    <a class="nav-item" href="#acessibilidade">
+      <span class="nav-dot dot-orange"></span> Acessibilidade — 81
+    </a>
+    <a class="nav-item" href="#seo">
+      <span class="nav-dot dot-orange"></span> SEO — 83
+    </a>
+    <a class="nav-item" href="#boas-praticas">
+      <span class="nav-dot dot-green"></span> Práticas — 96
+    </a>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-label">Correções — Semana 1</span>
+    <a class="nav-item" href="#fix-images">
+      <span class="nav-dot dot-red"></span> Imagens next/image
+    </a>
+    <a class="nav-item" href="#fix-js">
+      <span class="nav-dot dot-red"></span> JS não usado
+    </a>
+    <a class="nav-item" href="#fix-meta">
+      <span class="nav-dot dot-red"></span> Meta description
+    </a>
+    <a class="nav-item" href="#fix-robots">
+      <span class="nav-dot dot-red"></span> robots.txt
+    </a>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-label">Correções — Semana 2</span>
+    <a class="nav-item" href="#fix-preload">
+      <span class="nav-dot dot-orange"></span> Preload hero
+    </a>
+    <a class="nav-item" href="#fix-aria">
+      <span class="nav-dot dot-orange"></span> Aria labels
+    </a>
+    <a class="nav-item" href="#fix-contrast">
+      <span class="nav-dot dot-orange"></span> Contraste
+    </a>
+    <a class="nav-item" href="#fix-headings">
+      <span class="nav-dot dot-orange"></span> Headings
+    </a>
+  </div>
+
+  <div class="nav-group">
+    <span class="nav-label">Resultado</span>
+    <a class="nav-item" href="#resultado">
+      <span class="nav-dot dot-green"></span> Score esperado
+    </a>
+    <a class="nav-item" href="#checklist">
+      <span class="nav-dot dot-sol"></span> Checklist completa
+    </a>
+  </div>
+</nav>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-tag">PageSpeed Insights · Mobile · 13 Abril 2026</div>
+    <h1>Relatório <span>Mobile</span><br>SOLARIS</h1>
+    <p>Análise completa de performance, acessibilidade e SEO com todas as correções de código prontas a aplicar.</p>
+  </div>
+
+  <!-- SCORES BAR -->
+  <div class="scores-bar" id="scores">
+    <div style="margin-right:8px;">
+      <div style="font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:8px;">Resultados Mobile</div>
+    </div>
+    <div class="score-item">
+      <div class="score-circle red">62</div>
+      <div class="score-label">Desempenho</div>
+    </div>
+    <div class="score-item">
+      <div class="score-circle orange">81</div>
+      <div class="score-label">Acessibilidade</div>
+    </div>
+    <div class="score-item">
+      <div class="score-circle green">96</div>
+      <div class="score-label">Práticas</div>
+    </div>
+    <div class="score-item">
+      <div class="score-circle orange">83</div>
+      <div class="score-label">SEO</div>
+    </div>
+    <div style="margin-left:auto;padding:16px 20px;background:var(--red-light);border-radius:10px;border-left:3px solid var(--red);">
+      <div style="font-size:11px;color:var(--red);font-weight:700;margin-bottom:4px;">⚠ CRÍTICO</div>
+      <div style="font-size:12px;color:var(--red);">Desempenho 62 afeta diretamente<br>conversões e ranking Google</div>
+    </div>
+  </div>
+
+  <!-- MÉTRICAS -->
+  <section class="section">
+    <div class="section-header">
+      <div class="section-num">1</div>
+      <div>
+        <div class="section-label label-red">Diagnóstico de Desempenho</div>
+        <h2>Métricas Core Web Vitals</h2>
+      </div>
+    </div>
+
+    <div class="metrics-grid">
+      <div class="metric-card bad">
+        <div class="metric-name">LCP — Largest Contentful Paint</div>
+        <div class="metric-val bad">8.4s</div>
+        <div class="metric-sub">🔴 Crítico — ideal abaixo de 2.5s</div>
+      </div>
+      <div class="metric-card bad">
+        <div class="metric-name">FCP — First Contentful Paint</div>
+        <div class="metric-val bad">3.5s</div>
+        <div class="metric-sub">🔴 Crítico — ideal abaixo de 1.8s</div>
+      </div>
+      <div class="metric-card ok">
+        <div class="metric-name">Speed Index</div>
+        <div class="metric-val ok">5.7s</div>
+        <div class="metric-sub">🟡 Melhorar — ideal abaixo de 3.4s</div>
+      </div>
+      <div class="metric-card good">
+        <div class="metric-name">TBT — Total Blocking Time</div>
+        <div class="metric-val good">170ms</div>
+        <div class="metric-sub">🟢 Bom — ideal abaixo de 200ms</div>
+      </div>
+      <div class="metric-card good">
+        <div class="metric-name">CLS — Cumulative Layout Shift</div>
+        <div class="metric-val good">0</div>
+        <div class="metric-sub">🟢 Perfeito — sem layout shift</div>
+      </div>
+    </div>
+
+    <div class="alert alert-red">
+      <strong>⚠ LCP de 8.4 segundos:</strong>&nbsp;A maioria dos utilizadores abandona ao fim de 3 segundos. Cada segundo de atraso no LCP reduz conversões em ~7%. Com 8.4s estás a perder ~40% dos visitantes mobile antes de verem a loja.
+    </div>
+
+    <div class="alert alert-orange">
+      <strong>Contexto do teste:</strong>&nbsp;Emulado em Moto G Power com ligação lenta 4G — representa a maioria dos utilizadores portugueses em mobilidade.
+    </div>
+  </section>
+
+  <!-- FIX 1: IMAGENS -->
+  <section class="section" id="fix-images">
+    <div class="section-header">
+      <div class="section-num">2</div>
+      <div>
+        <div class="section-label label-red">🔴 Semana 1 — Impacto Máximo</div>
+        <h2>Imagens — Economia de 476 KiB</h2>
+      </div>
+    </div>
+
+    <p>O problema mais grave. Estás a servir imagens sem otimização — provavelmente PNG/JPG grandes sem compressão, sem WebP, sem lazy loading e sem tamanhos responsivos. O Next.js tem o componente <code>Image</code> que resolve tudo automaticamente.</p>
+
+    <div class="alert alert-red">
+      <strong>476 KiB de poupança</strong>&nbsp;— isto sozinho pode reduzir o LCP de 8.4s para ~4s. É a correção de maior impacto.
+    </div>
+
+    <h3>Correção — Substituir todas as &lt;img&gt; por next/image</h3>
+
+    <div class="diff-grid">
+      <div class="diff-box diff-before">
+        <div class="diff-header">❌ Antes — Errado</div>
+        <div class="code-block">
+          <pre><span class="c">// Imagem normal — sem otimização</span>
+<span class="f">&lt;img</span>
+  <span class="p">src</span>=<span class="s">"/hero.jpg"</span>
+  <span class="p">alt</span>=<span class="s">"Coleção Verão"</span>
+  <span class="p">style</span>=<span class="s">{{ width: '100%' }}</span>
+<span class="f">/&gt;</span></pre>
+        </div>
+      </div>
+      <div class="diff-box diff-after">
+        <div class="diff-header">✓ Depois — Correto</div>
+        <div class="code-block">
+          <pre><span class="k">import</span> Image <span class="k">from</span> <span class="s">'next/image'</span>
+
+<span class="c">// Otimizado — WebP automático</span>
+<span class="f">&lt;Image</span>
+  <span class="p">src</span>=<span class="s">"/hero.jpg"</span>
+  <span class="p">alt</span>=<span class="s">"Coleção Verão SOLARIS"</span>
+  <span class="p">width</span>=<span class="n">{1200}</span>
+  <span class="p">height</span>=<span class="n">{800}</span>
+  <span class="p">priority</span>
+  <span class="p">sizes</span>=<span class="s">"100vw"</span>
+<span class="f">/&gt;</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <h3>Para imagens de produto (lazy load)</h3>
+    <div class="code-block">
+      <div class="code-label">components/ProductCard.tsx</div>
+      <pre><span class="k">import</span> Image <span class="k">from</span> <span class="s">'next/image'</span>
+
+<span class="k">export function</span> <span class="f">ProductCard</span>({ product }) {
+  <span class="k">return</span> (
+    <span class="f">&lt;div</span> <span class="p">className</span>=<span class="s">"product-card"</span><span class="f">&gt;</span>
+      <span class="f">&lt;Image</span>
+        <span class="p">src</span>={product.image}
+        <span class="p">alt</span>={product.name}
+        <span class="p">width</span>=<span class="n">{600}</span>
+        <span class="p">height</span>=<span class="n">{800}</span>
+        <span class="c">// SEM priority = lazy load automático</span>
+        <span class="p">sizes</span>=<span class="s">"(max-width: 768px) 100vw, 50vw"</span>
+        <span class="p">className</span>=<span class="s">"product-img"</span>
+      <span class="f">/&gt;</span>
+    <span class="f">&lt;/div&gt;</span>
+  )
+}</pre>
+    </div>
+
+    <h3>Para imagens externas (CJdropshipping / Printful)</h3>
+    <div class="code-block">
+      <div class="code-label">next.config.js</div>
+      <pre><span class="c">// Adicionar domínios externos permitidos</span>
+<span class="k">const</span> nextConfig = {
+  <span class="p">images</span>: {
+    <span class="p">remotePatterns</span>: [
+      {
+        <span class="p">protocol</span>: <span class="s">'https'</span>,
+        <span class="p">hostname</span>: <span class="s">'cjdropshipping.com'</span>,
+      },
+      {
+        <span class="p">protocol</span>: <span class="s">'https'</span>,
+        <span class="p">hostname</span>: <span class="s">'*.cjdropshipping.com'</span>,
+      },
+      {
+        <span class="p">protocol</span>: <span class="s">'https'</span>,
+        <span class="p">hostname</span>: <span class="s">'files.cdn.printful.com'</span>,
+      },
+    ],
+  },
+}
+
+<span class="k">module.exports</span> = nextConfig</pre>
+    </div>
+  </section>
+
+  <!-- FIX 2: JS -->
+  <section class="section" id="fix-js">
+    <div class="section-header">
+      <div class="section-num">3</div>
+      <div>
+        <div class="section-label label-red">🔴 Semana 1</div>
+        <h2>JavaScript Não Usado — 97 KiB</h2>
+      </div>
+    </div>
+
+    <p>Tens 97 KiB de JavaScript carregado na página inicial que não é usado. Isto atrasa o FCP e bloqueia o thread principal. A solução é usar dynamic imports para componentes pesados que não são necessários no carregamento inicial.</p>
+
+    <h3>Dynamic imports para componentes pesados</h3>
+
+    <div class="diff-grid">
+      <div class="diff-box diff-before">
+        <div class="diff-header">❌ Antes — Carrega tudo de imediato</div>
+        <div class="code-block">
+          <pre><span class="c">// Carrega na página inicial</span>
+<span class="c">// mesmo que o utilizador nunca abra</span>
+<span class="k">import</span> { CartDrawer } <span class="k">from</span> <span class="s">'./CartDrawer'</span>
+<span class="k">import</span> { SearchModal } <span class="k">from</span> <span class="s">'./SearchModal'</span>
+<span class="k">import</span> { SizeGuide } <span class="k">from</span> <span class="s">'./SizeGuide'</span></pre>
+        </div>
+      </div>
+      <div class="diff-box diff-after">
+        <div class="diff-header">✓ Depois — Carrega só quando precisa</div>
+        <div class="code-block">
+          <pre><span class="k">import</span> dynamic <span class="k">from</span> <span class="s">'next/dynamic'</span>
+
+<span class="c">// Carrega só quando o utilizador abre</span>
+<span class="k">const</span> CartDrawer = <span class="f">dynamic</span>(
+  () => <span class="k">import</span>(<span class="s">'./CartDrawer'</span>),
+  { <span class="p">loading</span>: () => <span class="f">&lt;Spinner /&gt;</span> }
+)
+
+<span class="k">const</span> SearchModal = <span class="f">dynamic</span>(
+  () => <span class="k">import</span>(<span class="s">'./SearchModal'</span>)
+)
+
+<span class="k">const</span> SizeGuide = <span class="f">dynamic</span>(
+  () => <span class="k">import</span>(<span class="s">'./SizeGuide'</span>)
+)</pre>
+        </div>
+      </div>
+    </div>
+
+    <h3>Verificar o bundle — ver o que está a pesar</h3>
+    <div class="code-block">
+      <div class="code-label">Terminal</div>
+      <pre><span class="c"># Instalar analisador de bundle</span>
+npm install @next/bundle-analyzer
+
+<span class="c"># next.config.js</span>
+<span class="k">const</span> withBundleAnalyzer = <span class="f">require</span>(<span class="s">'@next/bundle-analyzer'</span>)({
+  <span class="p">enabled</span>: process.env.ANALYZE === <span class="s">'true'</span>,
+})
+
+<span class="c"># Correr análise</span>
+ANALYZE=<span class="s">true</span> npm run build</pre>
+    </div>
+
+    <div class="alert alert-orange">
+      <strong>Dica:</strong>&nbsp;Verifica se tens bibliotecas de animação (GSAP, Framer Motion) a carregar na homepage. Estas são frequentemente a causa de JS não usado — usar dynamic import com <code>ssr: false</code> resolve.
+    </div>
+  </section>
+
+  <!-- FIX 3: PRELOAD -->
+  <section class="section" id="fix-preload">
+    <div class="section-header">
+      <div class="section-num">4</div>
+      <div>
+        <div class="section-label label-red">🔴 Semana 1 — LCP</div>
+        <h2>Preload da Imagem Hero</h2>
+      </div>
+    </div>
+
+    <p>O browser está a descobrir a imagem hero tarde demais — só depois de processar todo o CSS e JS. Preloading diz ao browser para começar a descarregar a imagem imediatamente, antes de processar qualquer outra coisa.</p>
+
+    <div class="diff-grid">
+      <div class="diff-box diff-before">
+        <div class="diff-header">❌ Antes — Descoberto tarde</div>
+        <div class="code-block">
+          <pre><span class="c">// Hero sem priority</span>
+<span class="f">&lt;Image</span>
+  <span class="p">src</span>=<span class="s">"/hero.jpg"</span>
+  <span class="p">alt</span>=<span class="s">"Hero"</span>
+  <span class="p">width</span>=<span class="n">{1200}</span>
+  <span class="p">height</span>=<span class="n">{800}</span>
+<span class="f">/&gt;</span></pre>
+        </div>
+      </div>
+      <div class="diff-box diff-after">
+        <div class="diff-header">✓ Depois — Preload imediato</div>
+        <div class="code-block">
+          <pre><span class="c">// priority = preload automático</span>
+<span class="f">&lt;Image</span>
+  <span class="p">src</span>=<span class="s">"/hero.jpg"</span>
+  <span class="p">alt</span>=<span class="s">"Coleção Verão SOLARIS"</span>
+  <span class="p">width</span>=<span class="n">{1200}</span>
+  <span class="p">height</span>=<span class="n">{800}</span>
+  <span class="p">priority</span>
+  <span class="p">sizes</span>=<span class="s">"100vw"</span>
+  <span class="p">quality</span>=<span class="n">{85}</span>
+<span class="f">/&gt;</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <p style="font-size:13px;color:var(--muted);">O atributo <code>priority</code> no next/image adiciona automaticamente <code>rel="preload"</code> no head e desativa o lazy loading. Usar apenas na imagem above-the-fold (hero).</p>
+  </section>
+
+  <!-- FIX 4: META -->
+  <section class="section" id="fix-meta">
+    <div class="section-header">
+      <div class="section-num">5</div>
+      <div>
+        <div class="section-label label-red">🔴 Semana 1 — SEO</div>
+        <h2>Meta Description em Falta</h2>
+      </div>
+    </div>
+
+    <p>Sem meta description o Google gera um snippet automático que pode não ser apelativo. É uma correção de 5 minutos com impacto direto no CTR dos resultados de pesquisa.</p>
+
+    <div class="code-block">
+      <div class="code-label">app/layout.tsx — Meta global</div>
+      <pre><span class="k">export const</span> metadata = {
+  <span class="p">title</span>: <span class="s">'SOLARIS — Moda Feminina Verão Portugal'</span>,
+  <span class="p">description</span>: <span class="s">'SOLARIS — Vestidos, conjuntos e acessórios femininos para o verão. Envio rápido para Portugal. Coleção boho chic, florais e estampados.'</span>,
+  <span class="p">keywords</span>: <span class="s">'moda feminina, vestidos verão, roupa mulher portugal, boho chic'</span>,
+  <span class="p">openGraph</span>: {
+    <span class="p">title</span>: <span class="s">'SOLARIS — Moda Feminina Verão'</span>,
+    <span class="p">description</span>: <span class="s">'Coleção verão — vestidos, conjuntos e acessórios. Envio rápido PT.'</span>,
+    <span class="p">images</span>: [<span class="s">'/og-image.jpg'</span>],
+    <span class="p">locale</span>: <span class="s">'pt_PT'</span>,
+    <span class="p">type</span>: <span class="s">'website'</span>,
+  },
+}</pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-label">app/shop/page.tsx — Meta por página</div>
+      <pre><span class="k">export const</span> metadata = {
+  <span class="p">title</span>: <span class="s">'Coleção Verão | SOLARIS'</span>,
+  <span class="p">description</span>: <span class="s">'Explora a coleção verão SOLARIS — vestidos florais, conjuntos de linho e acessórios de praia. Envio para todo Portugal.'</span>,
+}</pre>
+    </div>
+  </section>
+
+  <!-- FIX 5: ROBOTS -->
+  <section class="section" id="fix-robots">
+    <div class="section-header">
+      <div class="section-num">6</div>
+      <div>
+        <div class="section-label label-red">🔴 Semana 1 — SEO Crítico</div>
+        <h2>robots.txt — 23 Erros</h2>
+      </div>
+    </div>
+
+    <div class="alert alert-red">
+      <strong>23 erros no robots.txt</strong>&nbsp;— O Google pode não conseguir indexar o site corretamente. Isto significa que a SOLARIS pode não aparecer nos resultados de pesquisa.
+    </div>
+
+    <h3>Solução — Criar ficheiro correto</h3>
+
+    <div class="diff-grid">
+      <div class="diff-box diff-before">
+        <div class="diff-header">❌ Atual — Com erros</div>
+        <div class="code-block">
+          <pre><span class="c"># Provavelmente inválido ou ausente</span>
+<span class="c"># 23 erros encontrados pelo Google</span></pre>
+        </div>
+      </div>
+      <div class="diff-box diff-after">
+        <div class="diff-header">✓ Correto — public/robots.txt</div>
+        <div class="code-block">
+          <pre>User-agent: *
+Allow: /
+
+<span class="c"># Bloquear páginas de API e privadas</span>
+Disallow: /api/
+Disallow: /admin/
+Disallow: /_next/
+
+Sitemap: https://solarisstore.pt/sitemap.xml</pre>
+        </div>
+      </div>
+    </div>
+
+    <h3>Criar sitemap dinâmico em Next.js</h3>
+    <div class="code-block">
+      <div class="code-label">app/sitemap.ts</div>
+      <pre><span class="k">export default async function</span> <span class="f">sitemap</span>() {
+  <span class="k">return</span> [
+    {
+      <span class="p">url</span>: <span class="s">'https://solarisstore.pt'</span>,
+      <span class="p">lastModified</span>: <span class="k">new</span> <span class="f">Date</span>(),
+      <span class="p">changeFrequency</span>: <span class="s">'weekly'</span>,
+      <span class="p">priority</span>: <span class="n">1</span>,
+    },
+    {
+      <span class="p">url</span>: <span class="s">'https://solarisstore.pt/shop'</span>,
+      <span class="p">lastModified</span>: <span class="k">new</span> <span class="f">Date</span>(),
+      <span class="p">changeFrequency</span>: <span class="s">'daily'</span>,
+      <span class="p">priority</span>: <span class="n">0.9</span>,
+    },
+    <span class="c">// Adicionar páginas de produto dinamicamente</span>
+  ]
+}</pre>
+    </div>
+  </section>
+
+  <!-- FIX 6: ARIA -->
+  <section class="section" id="fix-aria">
+    <div class="section-header">
+      <div class="section-num">7</div>
+      <div>
+        <div class="section-label label-orange">🟡 Semana 2 — Acessibilidade</div>
+        <h2>Botões sem Nome Acessível</h2>
+      </div>
+    </div>
+
+    <p>Botões de ícone (carrinho, pesquisa, menu hamburger, fechar) não têm texto nem aria-label. O Google e leitores de ecrã não conseguem interpretar o que fazem, o que penaliza o score de acessibilidade.</p>
+
+    <div class="diff-grid">
+      <div class="diff-box diff-before">
+        <div class="diff-header">❌ Antes — Sem nome</div>
+        <div class="code-block">
+          <pre><span class="f">&lt;button&gt;</span>
+  <span class="f">&lt;CartIcon /&gt;</span>
+<span class="f">&lt;/button&gt;</span>
+
+<span class="f">&lt;button&gt;</span>
+  <span class="f">&lt;SearchIcon /&gt;</span>
+<span class="f">&lt;/button&gt;</span>
+
+<span class="f">&lt;button&gt;</span>
+  <span class="f">&lt;MenuIcon /&gt;</span>
+<span class="f">&lt;/button&gt;</span></pre>
+        </div>
+      </div>
+      <div class="diff-box diff-after">
+        <div class="diff-header">✓ Depois — Com aria-label</div>
+        <div class="code-block">
+          <pre><span class="f">&lt;button</span> <span class="p">aria-label</span>=<span class="s">"Abrir carrinho"</span><span class="f">&gt;</span>
+  <span class="f">&lt;CartIcon /&gt;</span>
+<span class="f">&lt;/button&gt;</span>
+
+<span class="f">&lt;button</span> <span class="p">aria-label</span>=<span class="s">"Pesquisar produtos"</span><span class="f">&gt;</span>
+  <span class="f">&lt;SearchIcon /&gt;</span>
+<span class="f">&lt;/button&gt;</span>
+
+<span class="f">&lt;button</span> <span class="p">aria-label</span>=<span class="s">"Abrir menu"</span><span class="f">&gt;</span>
+  <span class="f">&lt;MenuIcon /&gt;</span>
+<span class="f">&lt;/button&gt;</span></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FIX 7: CONTRASTE -->
+  <section class="section" id="fix-contrast">
+    <div class="section-header">
+      <div class="section-num">8</div>
+      <div>
+        <div class="section-label label-orange">🟡 Semana 2 — Acessibilidade</div>
+        <h2>Contraste Insuficiente</h2>
+      </div>
+    </div>
+
+    <p>Texto claro sobre a imagem hero não tem contraste suficiente (mínimo 4.5:1 exigido). Isto afeta legibilidade em mobile sob luz solar direta — muito comum em Portugal no verão.</p>
+
+    <div class="diff-grid">
+      <div class="diff-box diff-before">
+        <div class="diff-header">❌ Antes — Texto sem overlay</div>
+        <div class="code-block">
+          <pre><span class="c">/* Texto direto sobre imagem */</span>
+.<span class="f">hero</span> {
+  <span class="p">background-image</span>: <span class="f">url</span>(<span class="s">'/hero.jpg'</span>);
+}
+
+.<span class="f">hero-text</span> {
+  <span class="p">color</span>: <span class="n">white</span>;
+  <span class="c">/* sem overlay = contraste insuficiente */</span>
+}</pre>
+        </div>
+      </div>
+      <div class="diff-box diff-after">
+        <div class="diff-header">✓ Depois — Com overlay escuro</div>
+        <div class="code-block">
+          <pre><span class="c">/* Overlay garante contraste */</span>
+.<span class="f">hero</span> {
+  <span class="p">position</span>: relative;
+}
+
+.<span class="f">hero</span>::before {
+  <span class="p">content</span>: <span class="s">''</span>;
+  <span class="p">position</span>: absolute;
+  <span class="p">inset</span>: <span class="n">0</span>;
+  <span class="p">background</span>: <span class="f">rgba</span>(<span class="n">0,0,0,0.45</span>);
+  <span class="p">z-index</span>: <span class="n">1</span>;
+}
+
+.<span class="f">hero-text</span> {
+  <span class="p">position</span>: relative;
+  <span class="p">z-index</span>: <span class="n">2</span>;
+  <span class="p">color</span>: <span class="n">white</span>;
+  <span class="p">text-shadow</span>: <span class="n">0 2px 8px rgba(0,0,0,0.5)</span>;
+}</pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FIX 8: HEADINGS -->
+  <section class="section" id="fix-headings">
+    <div class="section-header">
+      <div class="section-num">9</div>
+      <div>
+        <div class="section-label label-orange">🟡 Semana 2 — SEO + Acessibilidade</div>
+        <h2>Hierarquia de Headings</h2>
+      </div>
+    </div>
+
+    <p>Os headings têm de seguir ordem sequencial: h1 → h2 → h3. Saltar níveis (ex: h1 → h3) confunde os leitores de ecrã e prejudica o SEO.</p>
+
+    <div class="diff-grid">
+      <div class="diff-box diff-before">
+        <div class="diff-header">❌ Antes — Ordem incorreta</div>
+        <div class="code-block">
+          <pre><span class="f">&lt;h1&gt;</span>SOLARIS<span class="f">&lt;/h1&gt;</span>
+<span class="c">&lt;!-- Salta h2! --&gt;</span>
+<span class="f">&lt;h3&gt;</span>Coleção Verão<span class="f">&lt;/h3&gt;</span>
+<span class="f">&lt;h4&gt;</span>Vestidos<span class="f">&lt;/h4&gt;</span>
+<span class="f">&lt;h4&gt;</span>Conjuntos<span class="f">&lt;/h4&gt;</span></pre>
+        </div>
+      </div>
+      <div class="diff-box diff-after">
+        <div class="diff-header">✓ Depois — Ordem correta</div>
+        <div class="code-block">
+          <pre><span class="f">&lt;h1&gt;</span>SOLARIS<span class="f">&lt;/h1&gt;</span>
+<span class="c">&lt;!-- h2 sempre a seguir a h1 --&gt;</span>
+<span class="f">&lt;h2&gt;</span>Coleção Verão<span class="f">&lt;/h2&gt;</span>
+<span class="f">&lt;h3&gt;</span>Vestidos<span class="f">&lt;/h3&gt;</span>
+<span class="f">&lt;h3&gt;</span>Conjuntos<span class="f">&lt;/h3&gt;</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert alert-orange">
+      <strong>Regra:</strong>&nbsp;Cada página deve ter exatamente 1 h1 com a palavra-chave principal (ex: "Vestidos Verão Portugal"). Os h2 são secções principais, h3 são subsecções.
+    </div>
+  </section>
+
+  <!-- RESULTADO ESPERADO -->
+  <section class="section" id="resultado">
+    <div class="section-header">
+      <div class="section-num">10</div>
+      <div>
+        <div class="section-label label-green">🟢 Score Esperado</div>
+        <h2>Resultado após Correções</h2>
+      </div>
+    </div>
+
+    <p>Com todas as correções aplicadas, o score estimado de desempenho mobile deve subir significativamente:</p>
+
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Métrica</th>
+          <th>Atual</th>
+          <th>Esperado</th>
+          <th>Melhoria</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Desempenho</strong></td>
+          <td style="color:var(--red);font-weight:600;">62</td>
+          <td style="color:var(--green);font-weight:600;">85+</td>
+          <td><span style="color:var(--green);">+23 pontos</span></td>
+        </tr>
+        <tr>
+          <td><strong>LCP</strong></td>
+          <td style="color:var(--red);font-weight:600;">8.4s</td>
+          <td style="color:var(--orange);font-weight:600;">~3.5s</td>
+          <td><span style="color:var(--green);">−58%</span></td>
+        </tr>
+        <tr>
+          <td><strong>FCP</strong></td>
+          <td style="color:var(--red);font-weight:600;">3.5s</td>
+          <td style="color:var(--orange);font-weight:600;">~1.8s</td>
+          <td><span style="color:var(--green);">−49%</span></td>
+        </tr>
+        <tr>
+          <td><strong>Acessibilidade</strong></td>
+          <td style="color:var(--orange);font-weight:600;">81</td>
+          <td style="color:var(--green);font-weight:600;">95+</td>
+          <td><span style="color:var(--green);">+14 pontos</span></td>
+        </tr>
+        <tr>
+          <td><strong>SEO</strong></td>
+          <td style="color:var(--orange);font-weight:600;">83</td>
+          <td style="color:var(--green);font-weight:600;">97+</td>
+          <td><span style="color:var(--green);">+14 pontos</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h3>Impacto por correção</h3>
+    <div style="background:white;border:1px solid var(--clay);border-radius:10px;padding:20px;">
+      <div class="impact-row">
+        <span class="impact-label">next/image — Imagens otimizadas</span>
+        <div class="impact-track"><div class="impact-fill" style="width:95%"></div></div>
+        <span class="impact-score">+18pts</span>
+      </div>
+      <div class="impact-row">
+        <span class="impact-label">Dynamic imports — JS não usado</span>
+        <div class="impact-track"><div class="impact-fill" style="width:55%"></div></div>
+        <span class="impact-score">+8pts</span>
+      </div>
+      <div class="impact-row">
+        <span class="impact-label">Priority hero — Preload LCP</span>
+        <div class="impact-track"><div class="impact-fill" style="width:40%"></div></div>
+        <span class="impact-score">+5pts</span>
+      </div>
+      <div class="impact-row">
+        <span class="impact-label">robots.txt + sitemap — SEO</span>
+        <div class="impact-track"><div class="impact-fill" style="width:35%"></div></div>
+        <span class="impact-score">+8pts SEO</span>
+      </div>
+      <div class="impact-row">
+        <span class="impact-label">Meta description — SEO + CTR</span>
+        <div class="impact-track"><div class="impact-fill" style="width:30%"></div></div>
+        <span class="impact-score">+6pts SEO</span>
+      </div>
+      <div class="impact-row">
+        <span class="impact-label">Aria labels — Acessibilidade</span>
+        <div class="impact-track"><div class="impact-fill" style="width:45%"></div></div>
+        <span class="impact-score">+8pts</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHECKLIST -->
+  <section class="section" id="checklist">
+    <div class="section-header">
+      <div class="section-num">11</div>
+      <div>
+        <div class="section-label label-sol" style="color:var(--sol-deep);">Plano de Execução</div>
+        <h2>Checklist Completa</h2>
+      </div>
+    </div>
+
+    <h3>Semana 1 — Crítico (maior impacto)</h3>
+    <ul class="checklist">
+      <li class="check-item">
+        <span class="check-box check-week1">1</span>
+        <div class="check-content">
+          <strong>Substituir todas as &lt;img&gt; por next/image</strong>
+          <span>Economia de 476 KiB · LCP melhora de 8.4s para ~3.5s · Impacto máximo</span>
+        </div>
+      </li>
+      <li class="check-item">
+        <span class="check-box check-week1">2</span>
+        <div class="check-content">
+          <strong>Adicionar priority à imagem hero</strong>
+          <span>Preload imediato da imagem acima do fold · Reduz LCP</span>
+        </div>
+      </li>
+      <li class="check-item">
+        <span class="check-box check-week1">3</span>
+        <div class="check-content">
+          <strong>Dynamic imports nos componentes pesados</strong>
+          <span>CartDrawer, SearchModal, SizeGuide · Economia de 97 KiB JS</span>
+        </div>
+      </li>
+      <li class="check-item">
+        <span class="check-box check-week1">4</span>
+        <div class="check-content">
+          <strong>Corrigir robots.txt</strong>
+          <span>Criar public/robots.txt correto · Eliminar 23 erros · Indexação Google</span>
+        </div>
+      </li>
+      <li class="check-item">
+        <span class="check-box check-week1">5</span>
+        <div class="check-content">
+          <strong>Adicionar meta description a todas as páginas</strong>
+          <span>app/layout.tsx + páginas individuais · SEO +6 pontos</span>
+        </div>
+      </li>
+      <li class="check-item">
+        <span class="check-box check-week1">6</span>
+        <div class="check-content">
+          <strong>Criar sitemap.ts dinâmico</strong>
+          <span>app/sitemap.ts · Indexação automática de todas as páginas</span>
+        </div>
+      </li>
+      <li class="check-item">
+        <span class="check-box check-week1">7</span>
+        <div class="check-content">
+          <strong>Configurar domínios externos no next.config.js</strong>
+          <span>CJdropshipping + Printful CDN para next/image funcionar</span>
+        </div>
+      </li>
+    </ul>
+
+    <h3>Semana 2 — Importante</h3>
+    <ul class="checklist">
+      <li class="check-item">
+        <span class="check-box check-week2">8</span>
+        <div class="check-content">
+          <strong>Adicionar aria-label a todos os botões de ícone</strong>
+          <span>Carrinho, pesquisa, menu, fechar · Acessibilidade +8 pontos</span>
+        </div>
+      </li>
+      <li class="check-item">
+        <span class="check-box check-week2">9</span>
+        <div class="check-content">
+          <strong>Adicionar overlay escuro no hero</strong>
+          <span>Garantir contraste mínimo 4.5:1 no texto sobre imagem</span>
+        </div>
+      </li>
+      <li class="check-item">
+        <span class="check-box check-week2">10</span>
+        <div class="check-content">
+          <strong>Corrigir hierarquia de headings</strong>
+          <span>h1 → h2 → h3 em todas as páginas · SEO + Acessibilidade</span>
+        </div>
+      </li>
+      <li class="check-item">
+        <span class="check-box check-week2">11</span>
+        <div class="check-content">
+          <strong>Instalar @next/bundle-analyzer</strong>
+          <span>Identificar exatamente o que está a pesar no bundle</span>
+        </div>
+      </li>
+      <li class="check-item">
+        <span class="check-box check-week2">12</span>
+        <div class="check-content">
+          <strong>Adicionar display=swap nas Google Fonts</strong>
+          <span>Evitar bloqueio de render pelas fontes · Melhora FCP</span>
+        </div>
+      </li>
+      <li class="check-item">
+        <span class="check-box check-week2">13</span>
+        <div class="check-content">
+          <strong>Verificar erros no browser console</strong>
+          <span>Práticas recomendadas detetou erros no console · Corrigir</span>
+        </div>
+      </li>
+    </ul>
+  </section>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <span>Produzido por <strong>Pakkaz Studio</strong> · edmar@pakkaz.com · Viseu, Portugal</span>
+    <span>SOLARIS · Mobile Performance Report · Abril 2026</span>
+  </div>
+
+</div>
+
+<script>
+  const sections = document.querySelectorAll('section[id]')
+  const navItems = document.querySelectorAll('.nav-item')
+
+  window.addEventListener('scroll', () => {
+    let current = ''
+    sections.forEach(s => {
+      if (window.scrollY >= s.offsetTop - 120) current = s.id
+    })
+    navItems.forEach(item => {
+      item.style.background = ''
+      item.style.color = ''
+      if (item.getAttribute('href') === '#' + current) {
+        item.style.background = 'rgba(244,166,35,0.1)'
+        item.style.color = '#F4A623'
+      }
+    })
+  })
+</script>
+
+</body>
+</html>
