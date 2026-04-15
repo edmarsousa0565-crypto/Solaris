@@ -40,6 +40,8 @@ export default function AdminPage() {
   const [viewingProduct, setViewingProduct] = useState<any | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [productDetail, setProductDetail] = useState<any | null>(null);
+  const [shippingMethods, setShippingMethods] = useState<any[]>([]);
+  const [shippingLoading, setShippingLoading] = useState(false);
   const [selectedVids, setSelectedVids] = useState<string[]>([]);
   const [adminTab, setAdminTab] = useState<'variants' | 'content'>('variants');
   const [customName, setCustomName] = useState('');
@@ -231,19 +233,29 @@ export default function AdminPage() {
     }
 
     setDetailLoading(true);
+    setShippingMethods([]);
+    setShippingLoading(true);
     try {
-      const res = await fetch(`/api/cj/product?pid=${product.cjPid}`);
-      const data = await res.json();
-      if (data.product) {
-        setProductDetail(data.product);
+      const [detailRes, shippingRes] = await Promise.all([
+        fetch(`/api/cj/product?pid=${product.cjPid}`),
+        fetch(`/api/cj/shipping?pid=${product.cjPid}&country=PT`),
+      ]);
+      const [detailData, shippingData] = await Promise.all([
+        detailRes.json(),
+        shippingRes.json(),
+      ]);
+      if (detailData.product) {
+        setProductDetail(detailData.product);
         if (!existing?.selectedVids) {
-          setSelectedVids(data.product.variants?.map((v: any) => v.vid) || []);
+          setSelectedVids(detailData.product.variants?.map((v: any) => v.vid) || []);
         }
       }
+      setShippingMethods(shippingData.methods || []);
     } catch (err) {
       console.error(err);
     } finally {
       setDetailLoading(false);
+      setShippingLoading(false);
     }
   };
 
@@ -264,6 +276,7 @@ export default function AdminPage() {
     setCustomShipping('');
     setCustomVariantNames({});
     setEditingVid(null);
+    setShippingMethods([]);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -1513,39 +1526,77 @@ export default function AdminPage() {
                       <p className="font-mono text-[14px] text-absolute-black/40 italic">* Deixe em branco para usar o nome/descrição original da CJ.</p>
                     </div>
 
-                    {/* Shipping Method */}
+                    {/* Shipping Method — dados reais da CJ */}
                     <div className="flex flex-col gap-3 pt-4 border-t border-absolute-black/10">
-                      <label className="font-mono text-[13px] uppercase tracking-widest text-absolute-black/50">
-                        Método de Envio (Mostrado ao cliente)
-                      </label>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {[
-                          { id: '', label: 'Padrão CJ', desc: '15–25 dias úteis', icon: '📦' },
-                          { id: 'cj-direct', label: 'CJ Direct Line', desc: '7–15 dias úteis', icon: '✈️' },
-                          { id: 'express', label: 'Express', desc: '5–10 dias úteis', icon: '⚡' },
-                          { id: 'registered', label: 'Registado', desc: '20–35 dias úteis', icon: '📮' },
-                        ].map(opt => (
+                      <div className="flex items-center justify-between">
+                        <label className="font-mono text-[13px] uppercase tracking-widest text-absolute-black/50">
+                          Método de Envio para Portugal
+                        </label>
+                        {shippingLoading && (
+                          <span className="font-mono text-[11px] text-absolute-black/30 tracking-widest animate-pulse">A carregar...</span>
+                        )}
+                      </div>
+
+                      {!shippingLoading && shippingMethods.length === 0 && (
+                        <p className="font-mono text-[12px] text-absolute-black/30 tracking-widest">
+                          Sem métodos de envio disponíveis da CJ para este produto.
+                        </p>
+                      )}
+
+                      {shippingMethods.length > 0 && (
+                        <div className="flex flex-col gap-2">
+                          {/* Opção "sem preferência" */}
                           <button
-                            key={opt.id}
                             type="button"
-                            onClick={() => setCustomShipping(opt.id)}
+                            onClick={() => setCustomShipping('')}
                             className={`flex items-center gap-3 p-3 border-2 text-left transition-all ${
-                              customShipping === opt.id
+                              customShipping === ''
                                 ? 'border-absolute-black bg-absolute-black/3'
-                                : 'border-absolute-black/15 hover:border-absolute-black/40'
+                                : 'border-absolute-black/10 hover:border-absolute-black/30'
                             }`}
                           >
-                            <span className="text-lg">{opt.icon}</span>
-                            <div>
-                              <p className="font-mono text-[13px] uppercase tracking-widest text-absolute-black">{opt.label}</p>
-                              <p className="font-mono text-[11px] text-absolute-black/50">{opt.desc}</p>
+                            <div className="flex-1">
+                              <p className="font-mono text-[13px] uppercase tracking-widest text-absolute-black">Sem preferência</p>
+                              <p className="font-mono text-[11px] text-absolute-black/40">CJ escolhe o método automaticamente</p>
                             </div>
-                            <div className={`ml-auto w-4 h-4 border-2 flex items-center justify-center ${customShipping === opt.id ? 'bg-absolute-black border-absolute-black' : 'border-absolute-black/30'}`}>
-                              {customShipping === opt.id && <span className="text-stark-white text-[10px]">✓</span>}
+                            <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${customShipping === '' ? 'border-absolute-black bg-absolute-black' : 'border-absolute-black/30'}`}>
+                              {customShipping === '' && <span className="w-1.5 h-1.5 rounded-full bg-stark-white block" />}
                             </div>
                           </button>
-                        ))}
-                      </div>
+
+                          {shippingMethods.map(m => (
+                            <button
+                              key={m.id}
+                              type="button"
+                              onClick={() => setCustomShipping(m.id)}
+                              className={`flex items-center gap-3 p-3 border-2 text-left transition-all ${
+                                customShipping === m.id
+                                  ? 'border-absolute-black bg-absolute-black/3'
+                                  : 'border-absolute-black/10 hover:border-absolute-black/30'
+                              }`}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <p className="font-mono text-[13px] uppercase tracking-widest text-absolute-black truncate">{m.name}</p>
+                                <div className="flex gap-3 mt-0.5 flex-wrap">
+                                  <p className="font-mono text-[11px] text-absolute-black/50">{m.estimatedDelivery}</p>
+                                  {m.price > 0 && (
+                                    <p className="font-mono text-[11px] text-absolute-black/50">{m.priceFormatted}</p>
+                                  )}
+                                  {m.price === 0 && (
+                                    <p className="font-mono text-[11px] text-green-600">Grátis</p>
+                                  )}
+                                  {m.tracking && (
+                                    <p className="font-mono text-[11px] text-absolute-black/30">Com rastreio</p>
+                                  )}
+                                </div>
+                              </div>
+                              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${customShipping === m.id ? 'border-absolute-black bg-absolute-black' : 'border-absolute-black/30'}`}>
+                                {customShipping === m.id && <span className="w-1.5 h-1.5 rounded-full bg-stark-white block" />}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
 
                       {/* Supplier info from CJ */}
                       {productDetail && (productDetail.supplier || productDetail.moq > 1 || productDetail.weight > 0) && (
@@ -1597,10 +1648,8 @@ export default function AdminPage() {
                   ) : (
                     <p className="font-mono text-[13px] text-absolute-black/40">
                       {customShipping
-                        ? `Envio: ${['', 'cj-direct', 'express', 'registered'].includes(customShipping)
-                            ? { '': 'Padrão CJ', 'cj-direct': 'CJ Direct Line', 'express': 'Express', 'registered': 'Registado' }[customShipping]
-                            : customShipping}`
-                        : 'Envio padrão CJ'}
+                        ? `Envio: ${shippingMethods.find(m => m.id === customShipping)?.name || customShipping}`
+                        : 'Envio: sem preferência'}
                     </p>
                   )}
                 </div>
