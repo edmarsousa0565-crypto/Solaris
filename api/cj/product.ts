@@ -37,7 +37,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (!sb) return null;
           const { data } = await sb
             .from('featured_products')
-            .select('custom_name,custom_description,custom_image,custom_price,category,collection')
+            .select('custom_name,custom_description,custom_image,custom_price,category,collection,variant_names')
             .eq('pid', String(pid))
             .single();
           return data;
@@ -64,6 +64,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       : parseFloat(p.sellPrice || 0);
     const customCategory = supabaseRow?.category || p.categoryName || 'General';
     const customCollection = supabaseRow?.collection || 'Solaris';
+    const variantNames: Record<string, string> = supabaseRow?.variant_names || {};
 
     const product = {
       id: p.pid,
@@ -78,8 +79,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       variants: (p.variants || []).map((v: any) => ({
         vid: v.vid,
         // Keep both original and mapped field names for compatibility
-        variantNameEn: v.variantNameEn,
-        name: v.variantNameEn,
+        variantNameEn: variantNames[v.vid] || v.variantNameEn,
+        name: variantNames[v.vid] || v.variantNameEn,
+        originalName: v.variantNameEn,
         variantSellPrice: v.variantSellPrice,
         sellPrice: v.variantSellPrice,
         price: v.variantSellPrice,

@@ -48,6 +48,8 @@ export default function AdminPage() {
   const [customPrice, setCustomPrice] = useState('');
   const [customCollection, setCustomCollection] = useState('');
   const [customShipping, setCustomShipping] = useState('');
+  const [customVariantNames, setCustomVariantNames] = useState<Record<string, string>>({});
+  const [editingVid, setEditingVid] = useState<string | null>(null);
   const [variantFilter, setVariantFilter] = useState<'all' | string>('all');
   const [uploading, setUploading] = useState(false);
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
@@ -144,6 +146,7 @@ export default function AdminPage() {
             price: customPrice ? parseFloat(customPrice) : undefined,
             collection: customCollection || undefined,
             shippingMethod: customShipping || undefined,
+            variantNames: Object.keys(customVariantNames).length > 0 ? customVariantNames : undefined,
           }
         }),
       });
@@ -216,6 +219,7 @@ export default function AdminPage() {
       setCustomPrice(existing.priceNum != null ? String(existing.priceNum) : '');
       setCustomCollection(existing.collection || '');
       setCustomShipping((existing as any).shippingMethod || '');
+      setCustomVariantNames((existing as any).variantNames || {});
     } else {
       setCustomName('');
       setCustomDesc('');
@@ -223,6 +227,7 @@ export default function AdminPage() {
       setCustomPrice('');
       setCustomCollection('');
       setCustomShipping('');
+      setCustomVariantNames({});
     }
 
     setDetailLoading(true);
@@ -257,6 +262,8 @@ export default function AdminPage() {
     setCustomPrice('');
     setCustomCollection('');
     setCustomShipping('');
+    setCustomVariantNames({});
+    setEditingVid(null);
   };
 
   const handleSearch = (e: React.FormEvent) => {
@@ -1307,19 +1314,66 @@ export default function AdminPage() {
 
                                   {/* Info */}
                                   <div className="flex-1 min-w-0">
-                                    {/* Color + Size */}
-                                    <div className="flex flex-wrap gap-1.5 mb-1">
-                                      {parsed.color && (
-                                        <span className="font-mono text-[11px] tracking-widest uppercase bg-absolute-black/8 text-absolute-black/70 px-2 py-0.5">
-                                          {parsed.color}
-                                        </span>
-                                      )}
-                                      {parsed.size && (
-                                        <span className="font-mono text-[11px] tracking-widest uppercase border border-absolute-black/20 text-absolute-black px-2 py-0.5">
-                                          {parsed.size}
-                                        </span>
-                                      )}
-                                    </div>
+                                    {/* Nome editável */}
+                                    {editingVid === v.vid ? (
+                                      <input
+                                        autoFocus
+                                        type="text"
+                                        value={customVariantNames[v.vid] ?? (v.variantNameEn || v.name || '')}
+                                        onChange={e => setCustomVariantNames(prev => ({ ...prev, [v.vid]: e.target.value }))}
+                                        onBlur={() => setEditingVid(null)}
+                                        onKeyDown={e => { if (e.key === 'Enter' || e.key === 'Escape') setEditingVid(null); e.stopPropagation(); }}
+                                        onClick={e => e.stopPropagation()}
+                                        className="w-full font-mono text-[12px] bg-stark-white border border-solar-yellow px-2 py-1 outline-none mb-1"
+                                        placeholder="Nome personalizado..."
+                                      />
+                                    ) : (
+                                      <div className="flex items-center gap-1.5 mb-1 group/name">
+                                        <div className="flex flex-wrap gap-1 flex-1 min-w-0">
+                                          {customVariantNames[v.vid] ? (
+                                            <span className="font-mono text-[12px] text-absolute-black font-medium truncate">
+                                              {customVariantNames[v.vid]}
+                                            </span>
+                                          ) : (
+                                            <>
+                                              {parsed.color && (
+                                                <span className="font-mono text-[11px] tracking-widest uppercase bg-absolute-black/8 text-absolute-black/70 px-2 py-0.5">
+                                                  {parsed.color}
+                                                </span>
+                                              )}
+                                              {parsed.size && (
+                                                <span className="font-mono text-[11px] tracking-widest uppercase border border-absolute-black/20 text-absolute-black px-2 py-0.5">
+                                                  {parsed.size}
+                                                </span>
+                                              )}
+                                            </>
+                                          )}
+                                        </div>
+                                        <button
+                                          onClick={e => { e.stopPropagation(); setEditingVid(v.vid); }}
+                                          title="Editar nome"
+                                          className="shrink-0 opacity-0 group-hover/name:opacity-60 hover:!opacity-100 transition-opacity text-[11px] px-1 py-0.5 border border-absolute-black/20 font-mono"
+                                        >
+                                          ✎
+                                        </button>
+                                        {customVariantNames[v.vid] && (
+                                          <button
+                                            onClick={e => { e.stopPropagation(); setCustomVariantNames(prev => { const n = {...prev}; delete n[v.vid]; return n; }); }}
+                                            title="Repor nome original"
+                                            className="shrink-0 opacity-40 hover:opacity-100 transition-opacity text-[11px] px-1 py-0.5 font-mono"
+                                          >
+                                            ↺
+                                          </button>
+                                        )}
+                                      </div>
+                                    )}
+
+                                    {/* Nome original quando está editado */}
+                                    {customVariantNames[v.vid] && editingVid !== v.vid && (
+                                      <p className="font-mono text-[10px] text-absolute-black/30 truncate mb-0.5">
+                                        CJ: {v.variantNameEn || v.name}
+                                      </p>
+                                    )}
 
                                     {/* Price */}
                                     <p className="font-mono text-sm font-medium text-absolute-black">
