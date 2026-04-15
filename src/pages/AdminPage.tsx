@@ -1277,10 +1277,14 @@ export default function AdminPage() {
                               const price = v.variantSellPrice ?? v.sellPrice ?? v.price;
                               const image = v.variantImage ?? v.image;
                               const sku = v.sku || '';
-                              const stockColor = stock === 0 ? 'text-red-500 bg-red-50 border-red-200'
-                                : stock <= 10 ? 'text-amber-600 bg-amber-50 border-amber-200'
-                                : 'text-green-600 bg-green-50 border-green-200';
-                              const stockLabel = stock === 0 ? 'Esgotado' : stock <= 10 ? `${stock} restantes` : `${stock} em stock`;
+                              // CJ dropshipping: stock=0 geralmente significa "não rastreado" (sob encomenda),
+                              // não necessariamente esgotado. Só mostramos aviso real quando stock está entre 1-10.
+                              const stockColor = stock > 10 ? 'text-green-600 bg-green-50 border-green-200'
+                                : stock > 0 ? 'text-amber-600 bg-amber-50 border-amber-200'
+                                : 'text-absolute-black/40 bg-absolute-black/5 border-absolute-black/10';
+                              const stockLabel = stock > 10 ? `${stock} em stock`
+                                : stock > 0 ? `${stock} restantes`
+                                : 'Disponível';
                               return (
                                 <button
                                   key={v.vid}
@@ -1291,7 +1295,7 @@ export default function AdminPage() {
                                     isSelected
                                       ? 'border-absolute-black bg-absolute-black/3'
                                       : 'border-absolute-black/10 hover:border-absolute-black/40'
-                                  } ${stock === 0 ? 'opacity-50' : ''}`}
+                                  }`}
                                 >
                                   {/* Image */}
                                   <div className="w-14 h-14 shrink-0 bg-bleached-concrete/30 overflow-hidden">
