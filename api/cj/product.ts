@@ -77,21 +77,33 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       description: customDesc,
       variants: (p.variants || []).map((v: any) => ({
         vid: v.vid,
+        // Keep both original and mapped field names for compatibility
+        variantNameEn: v.variantNameEn,
         name: v.variantNameEn,
+        variantSellPrice: v.variantSellPrice,
+        sellPrice: v.variantSellPrice,
         price: v.variantSellPrice,
-        stock: v.variantStock,
+        variantStock: v.variantStock ?? 0,
+        stock: v.variantStock ?? 0,
+        variantImage: v.variantImage,
         image: v.variantImage,
+        sku: v.variantSku || '',
+        variantKey: v.variantKey || '',
       })),
       sizes: [...new Set((p.variants || []).map((v: any) => {
-        // Tenta extrair tamanho da string (ex: "Blue / XL" -> "XL")
-        const parts = v.variantNameEn.split('/');
-        return parts.length > 1 ? parts[parts.length - 1].trim() : v.variantNameEn.trim();
+        const parts = (v.variantNameEn || '').split('/');
+        return parts.length > 1 ? parts[parts.length - 1].trim() : (v.variantNameEn || '').trim();
       }).filter(Boolean))],
       colors: [...new Set((p.variants || []).map((v: any) => {
-        const parts = v.variantNameEn.split('/');
+        const parts = (v.variantNameEn || '').split('/');
         return parts.length > 1 ? parts[0].trim() : null;
       }).filter(Boolean))],
       cjPid: p.pid,
+      pid: p.pid,
+      supplier: p.supplierName || p.vendorName || '',
+      moq: p.minBuyNum || 1,
+      weight: p.productWeight || 0,
+      processingTime: p.productProcessingTime || '2-5',
       shippingTime: '7-14 dias úteis',
       isNew: true,
       isSoldOut: false,

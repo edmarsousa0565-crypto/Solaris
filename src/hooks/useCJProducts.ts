@@ -24,10 +24,11 @@ interface UseCJProductsOptions {
   page?: number;
   pageSize?: number;
   categoryId?: string;
+  searchMode?: 'name' | 'pid';
 }
 
 export function useCJProducts(options: UseCJProductsOptions = {}) {
-  const { query = '', page = 1, pageSize = 20, categoryId = '' } = options;
+  const { query = '', page = 1, pageSize = 20, categoryId = '', searchMode = 'name' } = options;
 
   const [products, setProducts] = useState<CJProduct[]>([]);
   const [total, setTotal] = useState(0);
@@ -42,6 +43,7 @@ export function useCJProducts(options: UseCJProductsOptions = {}) {
       query,
       page: String(page),
       pageSize: String(pageSize),
+      searchMode,
       ...(categoryId ? { categoryId } : {}),
     });
 
@@ -54,7 +56,7 @@ export function useCJProducts(options: UseCJProductsOptions = {}) {
       })
       .catch(err => setError(err.message))
       .finally(() => setLoading(false));
-  }, [query, page, pageSize, categoryId]);
+  }, [query, page, pageSize, categoryId, searchMode]);
 
   return { products, total, loading, error };
 }

@@ -56,6 +56,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           isNew: r.is_new ?? true,
           isSoldOut: r.is_sold_out ?? false,
           sortOrder: r.sort_order || 0,
+          shippingMethod: r.shipping_method || '',
         }));
 
       res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
@@ -78,15 +79,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         };
 
         // Só actualiza os campos enviados — não sobrescreve os que não vieram
-        if (metadata?.name !== undefined)        payload.custom_name        = metadata.name || null;
-        if (metadata?.description !== undefined) payload.custom_description = metadata.description || null;
-        if (metadata?.image !== undefined)       payload.custom_image       = metadata.image || null;
-        if (metadata?.price !== undefined)       payload.custom_price       = metadata.price || null;
-        if (metadata?.category !== undefined)    payload.category           = metadata.category || null;
-        if (metadata?.collection !== undefined)  payload.collection         = metadata.collection || null;
-        if (metadata?.isNew !== undefined)       payload.is_new             = metadata.isNew;
-        if (metadata?.isSoldOut !== undefined)   payload.is_sold_out        = metadata.isSoldOut;
-        if (metadata?.sortOrder !== undefined)   payload.sort_order         = metadata.sortOrder;
+        if (metadata?.name !== undefined)           payload.custom_name        = metadata.name || null;
+        if (metadata?.description !== undefined)    payload.custom_description = metadata.description || null;
+        if (metadata?.image !== undefined)          payload.custom_image       = metadata.image || null;
+        if (metadata?.price !== undefined)          payload.custom_price       = metadata.price || null;
+        if (metadata?.category !== undefined)       payload.category           = metadata.category || null;
+        if (metadata?.collection !== undefined)     payload.collection         = metadata.collection || null;
+        if (metadata?.shippingMethod !== undefined) payload.shipping_method    = metadata.shippingMethod || null;
+        if (metadata?.isNew !== undefined)          payload.is_new             = metadata.isNew;
+        if (metadata?.isSoldOut !== undefined)      payload.is_sold_out        = metadata.isSoldOut;
+        if (metadata?.sortOrder !== undefined)      payload.sort_order         = metadata.sortOrder;
 
         const { error } = await supabase
           .from('featured_products')
