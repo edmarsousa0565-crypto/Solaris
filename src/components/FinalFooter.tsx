@@ -92,7 +92,7 @@ export default function FinalFooter() {
   };
 
   return (
-    <footer ref={containerRef} className="relative w-full bg-[#121212] text-[#F7F7F5] pt-32 pb-8 px-8 md:px-16 overflow-hidden z-40 flex flex-col justify-between min-h-screen">
+    <footer ref={containerRef} className="relative w-full bg-[#121212] text-[#F7F7F5] pt-32 pb-24 md:pb-8 px-8 md:px-16 z-40 flex flex-col justify-between min-h-screen">
       
       {/* Top Section: CTA & Socials */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-16 md:gap-0">
@@ -166,7 +166,7 @@ export default function FinalFooter() {
       </div>
 
       {/* Bottom Section: Giant Logo */}
-      <div className="relative w-full flex justify-center items-end mt-auto" aria-hidden="true">
+      <div className="relative w-full flex justify-center items-end mt-auto overflow-hidden" aria-hidden="true">
         <div className="text-[18vw] font-serif leading-[0.75] tracking-tighter uppercase select-none w-full text-center relative">
           {/* Outline/Faded Layer */}
           <span className="text-[#F7F7F5]/8">SOLARIS</span>

@@ -15,7 +15,6 @@ import SmoothScroll from './components/SmoothScroll';
 import GridSystem from './components/GridSystem';
 import HeroSection from './components/HeroSection';
 import ProductCard from './components/ProductCard';
-import SpotlightCursor from './components/SpotlightCursor';
 import ManifestoSection from './components/ManifestoSection';
 const SideCart = lazy(() => import('./components/SideCart'));
 import UtilityGrid from './components/UtilityGrid';
@@ -56,9 +55,6 @@ import { useCartAnimation } from './hooks/useCartAnimation';
 import { useFeaturedProducts } from './hooks/useFeaturedProducts';
 
 export default function App() {
-  const containerRef = useRef<HTMLDivElement>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
   // PageView por rota
   useEffect(() => { trackPageView(); }, []);
 
@@ -76,120 +72,6 @@ export default function App() {
 
   // Categorias derivadas dos produtos reais
   const REAL_CATEGORIES = ['All', ...Array.from(new Set(featuredProducts.map(p => p.category).filter(Boolean)))];
-
-  useGSAP(() => {
-    if (!wrapperRef.current || !containerRef.current) return;
-    // Scroll horizontal apenas em desktop
-    if (window.innerWidth < 768) return;
-
-    // 1. Animação Principal: Scroll Horizontal Dinâmico
-    const scrollTween = gsap.to(containerRef.current, {
-      x: () => -(containerRef.current!.scrollWidth - window.innerWidth),
-      ease: "none",
-      scrollTrigger: {
-        trigger: wrapperRef.current,
-        pin: true,
-        scrub: 1,
-        end: () => "+=" + containerRef.current!.scrollWidth,
-        refreshPriority: 1, // Garante que este pin é calculado antes das secções verticais
-        onUpdate: (self) => {
-          const velocity = self.getVelocity();
-          let skewAmount = velocity / 400; 
-          skewAmount = Math.max(-2, Math.min(2, skewAmount));
-          
-          gsap.to('.product-image-wrapper', { 
-            skewX: skewAmount, 
-            duration: 0.5, 
-            ease: 'power3.out',
-            overwrite: 'auto'
-          });
-        }
-      }
-    });
-
-    // 2. Animações dos Product Cards (Clip-Path e Parallax)
-    const cards = gsap.utils.toArray('.product-card');
-    cards.forEach((card: any) => {
-      const wrapper = card.querySelector('.product-image-wrapper');
-      const image = card.querySelector('.product-image');
-
-      gsap.to(wrapper, {
-        clipPath: 'inset(0% 0% 0% 0%)',
-        duration: 1.5,
-        ease: 'power4.inOut',
-        scrollTrigger: {
-          trigger: card,
-          containerAnimation: scrollTween,
-          start: 'left 85%',
-        }
-      });
-
-      gsap.to(image, {
-        xPercent: -15,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: card,
-          containerAnimation: scrollTween,
-          start: 'left right',
-          end: 'right left',
-          scrub: true,
-        }
-      });
-    });
-
-    // 3. Animações do Brand Manifesto (Visual Odyssey)
-    const manifestoVideo = document.querySelector('.manifesto-video-container');
-    if (manifestoVideo) {
-      gsap.to(manifestoVideo, {
-        opacity: 1,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: manifestoVideo.parentElement,
-          containerAnimation: scrollTween,
-          start: 'left 60%',
-          end: 'center center',
-          scrub: true,
-        }
-      });
-      gsap.to(manifestoVideo, {
-        opacity: 0,
-        ease: 'none',
-        scrollTrigger: {
-          trigger: manifestoVideo.parentElement,
-          containerAnimation: scrollTween,
-          start: 'right 120%',
-          end: 'right 50%',
-          scrub: true,
-        }
-      });
-    }
-
-    const manifestoWords = gsap.utils.toArray('.manifesto-word');
-    manifestoWords.forEach((word: any) => {
-      const speed = parseFloat(word.getAttribute('data-speed') || '0');
-      gsap.to(word, {
-        x: () => (window.innerWidth * speed),
-        ease: 'none',
-        scrollTrigger: {
-          trigger: word.parentElement.parentElement,
-          containerAnimation: scrollTween,
-          start: 'left right',
-          end: 'right left',
-          scrub: true,
-        }
-      });
-    });
-    // 4. Refresh do ScrollTrigger quando imagens carregam e alteram o tamanho do container
-    // ResizeObserver deteta reflows reais em vez de um timeout arbitrário
-    let rafId: number;
-    const ro = new ResizeObserver(() => {
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => ScrollTrigger.refresh());
-    });
-    if (containerRef.current) ro.observe(containerRef.current);
-
-    return () => { ro.disconnect(); cancelAnimationFrame(rafId); };
-  }, { scope: wrapperRef }); // Scope to wrapperRef for containment
 
   return (
     <HelmetProvider>
@@ -217,8 +99,6 @@ export default function App() {
         <Route path="/envios" element={<ShippingPage />} />
         <Route path="*" element={<NotFoundPage />} />
         <Route path="/" element={<HomePage
-          wrapperRef={wrapperRef}
-          containerRef={containerRef}
           HORIZONTAL_PRODUCTS={HORIZONTAL_PRODUCTS}
           featuredProducts={featuredProducts}
           featuredLoading={loading}
@@ -232,8 +112,10 @@ export default function App() {
   );
 }
 
-function HomePage({ wrapperRef, containerRef, HORIZONTAL_PRODUCTS, featuredProducts, featuredLoading, categories }: any) {
+function HomePage({ HORIZONTAL_PRODUCTS, featuredProducts, featuredLoading, categories }: any) {
   const handleAddToCart = useCartAnimation();
+  const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef   = useRef<HTMLDivElement>(null);
 
   // Estado dos Filtros
   const [activeFilter, setActiveFilter] = useState('All');
@@ -241,16 +123,72 @@ function HomePage({ wrapperRef, containerRef, HORIZONTAL_PRODUCTS, featuredProdu
   // Estado da PDP
   const [selectedProduct, setSelectedProduct] = useState<any | null>(null);
 
-  useEffect(() => {
-    // Refresh após navegação de volta — rAF garante que o DOM já foi pintado
-    const id = requestAnimationFrame(() => ScrollTrigger.refresh());
-    return () => cancelAnimationFrame(id);
-  }, []);
+  // Scroll horizontal — corre quando HomePage monta (fresh a cada navegação)
+  useGSAP(() => {
+    if (!wrapperRef.current || !containerRef.current) return;
+    if (window.innerWidth < 768) return;
+
+    const scrollTween = gsap.to(containerRef.current, {
+      x: () => -(containerRef.current!.scrollWidth - window.innerWidth),
+      ease: 'none',
+      scrollTrigger: {
+        trigger: wrapperRef.current,
+        pin: true,
+        scrub: 1,
+        end: () => '+=' + containerRef.current!.scrollWidth,
+        refreshPriority: 1,
+        onUpdate: (self) => {
+          const velocity = self.getVelocity();
+          const skew = Math.max(-2, Math.min(2, velocity / 400));
+          gsap.to('.product-image-wrapper', { skewX: skew, duration: 0.5, ease: 'power3.out', overwrite: 'auto' });
+        }
+      }
+    });
+
+    const cards = gsap.utils.toArray('.product-card');
+    cards.forEach((card: any) => {
+      const wrapper = card.querySelector('.product-image-wrapper');
+      const image   = card.querySelector('.product-image');
+      gsap.to(wrapper, {
+        clipPath: 'inset(0% 0% 0% 0%)',
+        duration: 1.5,
+        ease: 'power4.inOut',
+        scrollTrigger: { trigger: card, containerAnimation: scrollTween, start: 'left 85%' }
+      });
+      gsap.to(image, {
+        xPercent: -15,
+        ease: 'none',
+        scrollTrigger: { trigger: card, containerAnimation: scrollTween, start: 'left right', end: 'right left', scrub: true }
+      });
+    });
+
+    const manifestoVideo = document.querySelector('.manifesto-video-container');
+    if (manifestoVideo) {
+      gsap.to(manifestoVideo, { opacity: 1, ease: 'none', scrollTrigger: { trigger: manifestoVideo.parentElement, containerAnimation: scrollTween, start: 'left 60%', end: 'center center', scrub: true } });
+      gsap.to(manifestoVideo, { opacity: 0, ease: 'none', scrollTrigger: { trigger: manifestoVideo.parentElement, containerAnimation: scrollTween, start: 'right 120%', end: 'right 50%', scrub: true } });
+    }
+
+    gsap.utils.toArray('.manifesto-word').forEach((word: any) => {
+      const speed = parseFloat(word.getAttribute('data-speed') || '0');
+      gsap.to(word, {
+        x: () => window.innerWidth * speed,
+        ease: 'none',
+        scrollTrigger: { trigger: word.parentElement.parentElement, containerAnimation: scrollTween, start: 'left right', end: 'right left', scrub: true }
+      });
+    });
+
+    let rafId: number;
+    const ro = new ResizeObserver(() => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => ScrollTrigger.refresh());
+    });
+    ro.observe(containerRef.current);
+    return () => { ro.disconnect(); cancelAnimationFrame(rafId); };
+  }, { scope: wrapperRef });
 
   return (
     <>
     <SmoothScroll>
-      <SpotlightCursor />
       <StickyHeader
         activeFilter={activeFilter}
         onFilterChange={setActiveFilter}

@@ -130,9 +130,9 @@ export default function UtilityGrid({ products, loading, onAddToCart, onProductC
               className="inventory-item group relative flex flex-col gap-6"
               style={{ opacity: 0 }}
             >
-              <div
-                onClick={() => !item.isSoldOut && onProductClick(item)}
-                className="relative w-full aspect-[3/4] overflow-hidden bg-bleached-concrete/20 cursor-pointer"
+              <Link
+                to={`/shop/product/${item.cjPid || item.id}`}
+                className="relative w-full aspect-[3/4] overflow-hidden bg-bleached-concrete/20 cursor-pointer block"
               >
                 <img
                   src={item.image}
@@ -175,12 +175,15 @@ export default function UtilityGrid({ products, loading, onAddToCart, onProductC
                     <span className="text-lg font-light leading-none">+</span>
                   </button>
                 )}
-              </div>
+              </Link>
 
-              <div className="flex justify-between items-baseline font-mono text-xs uppercase tracking-widest px-2">
+              <Link
+                to={`/shop/product/${item.cjPid || item.id}`}
+                className="flex justify-between items-baseline font-mono text-xs uppercase tracking-widest px-2 hover:opacity-70 transition-opacity"
+              >
                 <MagneticText><span>{item.name}</span></MagneticText>
                 <MagneticText><span className="text-absolute-black/70 shrink-0 ml-2">{item.price}</span></MagneticText>
-              </div>
+              </Link>
 
             </div>
           ))}

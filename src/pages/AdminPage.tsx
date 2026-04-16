@@ -154,18 +154,12 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (data.ok) {
-        setFeaturedPids(data.pids);
         if (action === 'add') {
-          // Se estamos a adicionar/atualizar, garantimos que o produto está na lista local
-          setFeaturedProducts(prev => {
-            const filtered = prev.filter(p => p.cjPid !== pid);
-            return [...filtered, { ...product, selectedVids: vids }];
-          });
+          await loadFeatured(); // Atualiza estado com dados reais guardados na DB
+          if (vids !== undefined) closeModal();
         } else {
+          setFeaturedPids(data.pids);
           setFeaturedProducts(prev => prev.filter(p => p.cjPid !== pid));
-        }
-        if (vids) {
-          closeModal(); // Fecha o modal e limpa estados ao guardar
         }
       }
     } catch {
@@ -1655,7 +1649,7 @@ export default function AdminPage() {
                     Cancelar
                   </button>
                   <button
-                    onClick={() => toggleFeatured(viewingProduct, selectedVids.length > 0 ? selectedVids : undefined)}
+                    onClick={() => toggleFeatured(viewingProduct, selectedVids)}
                     disabled={saving === viewingProduct.cjPid}
                     className="font-mono text-[13px] uppercase tracking-widest px-8 py-3 bg-absolute-black text-stark-white hover:bg-absolute-black/90 transition-all disabled:opacity-50"
                   >

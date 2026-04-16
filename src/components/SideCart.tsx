@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { SfDrawer, SfButton, SfIconAdd, SfIconRemove, SfIconClose } from '@storefront-ui/react';
 import { trackInitiateCheckout } from '../lib/pixel';
 import { useCartStore } from '../store/cartStore';
@@ -120,16 +121,22 @@ export default function SideCart() {
           ) : (
             items.map((item, i) => (
               <div key={i} className="flex justify-between items-center gap-4 group">
-                {item.image ? (
-                  <img loading="lazy" decoding="async"
-                    src={item.image}
-                    alt={item.name}
-                    className="w-10 h-14 object-cover flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-500"
-                    referrerPolicy="no-referrer"
-                  />
-                ) : (
-                  <div className="w-10 h-14 bg-bleached-concrete flex-shrink-0" />
-                )}
+                <Link
+                  to={`/shop/product/${item.cjPid || item.id}`}
+                  onClick={() => setIsOpen(false)}
+                  className="flex-shrink-0"
+                >
+                  {item.image ? (
+                    <img loading="lazy" decoding="async"
+                      src={item.image}
+                      alt={item.name}
+                      className="w-10 h-14 object-cover grayscale group-hover:grayscale-0 transition-all duration-500"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div className="w-10 h-14 bg-bleached-concrete" />
+                  )}
+                </Link>
                 <div className="flex-1 flex flex-col gap-0.5 min-w-0">
                   <div className="flex justify-between items-center">
                     <span className="text-absolute-black/50 text-[13px]">{String(i + 1).padStart(2, '0')}</span>
@@ -141,7 +148,13 @@ export default function SideCart() {
                       Remover
                     </button>
                   </div>
-                  <span className="uppercase tracking-wide group-hover:text-oxidized-gold transition-colors truncate">{item.name}</span>
+                  <Link
+                    to={`/shop/product/${item.cjPid || item.id}`}
+                    onClick={() => setIsOpen(false)}
+                    className="uppercase tracking-wide group-hover:text-oxidized-gold transition-colors truncate hover:underline"
+                  >
+                    {item.name}
+                  </Link>
                   <div className="flex gap-3">
                     <span className="text-[14px] text-absolute-black/60 uppercase">Size: {item.size || 'Unique'}</span>
                     {item.color && (

@@ -14,7 +14,6 @@ import { useCartAnimation } from '../hooks/useCartAnimation';
 type SortOption = 'default' | 'price-asc' | 'price-desc';
 
 import { useCartStore } from '../store/cartStore';
-import SpotlightCursor from '../components/SpotlightCursor';
 
 export default function ShopPage() {
   const onAddToCart = useCartAnimation();
@@ -58,8 +57,6 @@ export default function ShopPage() {
       <meta property="og:url" content="https://solaris-drab.vercel.app/shop" />
     </Helmet>
     <div className="min-h-screen bg-raw-linen text-absolute-black">
-      <SpotlightCursor />
-
       {/* Header fixo */}
       <header className="fixed top-0 left-0 w-full h-16 z-50 bg-raw-linen/90 backdrop-blur-md flex items-center justify-between px-8 md:px-16 border-b border-absolute-black/10">
         <Link to="/" className="font-serif text-sm tracking-[0.4em] uppercase hover:text-oxidized-gold transition-colors">

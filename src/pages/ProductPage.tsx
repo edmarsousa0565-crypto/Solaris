@@ -10,7 +10,6 @@ import { useCJProduct } from '../hooks/useCJProduct';
 import { useCartStore } from '../store/cartStore';
 import { useWishlistStore } from '../store/wishlistStore';
 import { useCartAnimation } from '../hooks/useCartAnimation';
-import SpotlightCursor from '../components/SpotlightCursor';
 import { Helmet } from 'react-helmet-async';
 
 export default function ProductPage() {
@@ -81,9 +80,7 @@ export default function ProductPage() {
         })}</script>
       </Helmet>
     )}
-    <div className="min-h-screen bg-raw-linen text-absolute-black">
-      <SpotlightCursor />
-
+    <div className="min-h-screen bg-raw-linen text-absolute-black overflow-x-hidden">
       {/* Header */}
       <header className="fixed top-0 left-0 w-full h-16 z-50 bg-raw-linen/90 backdrop-blur-md flex items-center justify-between px-8 md:px-16 border-b border-absolute-black/10">
         <button
@@ -200,7 +197,7 @@ export default function ProductPage() {
               </div>
 
               {/* COLUNA DIREITA — Info e compra */}
-              <div ref={infoRef} className="w-full md:w-[45%] px-8 md:px-16 py-12 md:py-20 flex flex-col gap-8 border-l border-absolute-black/10">
+              <div ref={infoRef} className="w-full md:w-[45%] px-5 md:px-16 py-8 md:py-20 flex flex-col gap-6 md:gap-8 border-l border-absolute-black/10">
 
                 {/* Breadcrumb */}
                 <nav className="flex items-center gap-3 font-mono text-[13px] tracking-[0.3em] uppercase text-absolute-black/90">
@@ -332,22 +329,22 @@ export default function ProductPage() {
                     href="https://wa.me/351910000000?text=Olá!%20Tenho%20uma%20dúvida%20sobre%20este%20produto."
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-3 border border-absolute-black/15 font-mono text-[13px] tracking-[0.3em] uppercase py-3.5 px-8 text-absolute-black/90 hover:bg-absolute-black hover:text-stark-white transition-colors duration-300"
+                    className="flex items-center justify-center gap-3 border border-absolute-black/15 font-mono text-[11px] tracking-[0.3em] uppercase py-3.5 px-6 text-absolute-black/90 hover:bg-absolute-black hover:text-stark-white transition-colors duration-300"
                   >
-                    <span>Ÿ’¬</span> Dúvidas? Fala connosco no WhatsApp
+                    Dúvidas? WhatsApp
                   </a>
-                  <div className="flex items-center justify-between px-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-oxidized-gold text-[13px]">✧</span>
-                      <span className="font-mono text-[13px] tracking-widest uppercase text-absolute-black/55">Devolução 30 dias</span>
+                  <div className="grid grid-cols-3 gap-2 px-1">
+                    <div className="flex items-center gap-1">
+                      <span className="text-oxidized-gold text-[11px]" aria-hidden="true">&#10055;</span>
+                      <span className="font-mono text-[9px] tracking-wider uppercase text-absolute-black/55 leading-tight">Dev. 30 dias</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-oxidized-gold text-[13px]">✧</span>
-                      <span className="font-mono text-[13px] tracking-widest uppercase text-absolute-black/55">Pagamento Seguro</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-oxidized-gold text-[11px]" aria-hidden="true">&#10055;</span>
+                      <span className="font-mono text-[9px] tracking-wider uppercase text-absolute-black/55 leading-tight">Pag. Seguro</span>
                     </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-oxidized-gold text-[13px]">✧</span>
-                      <span className="font-mono text-[13px] tracking-widest uppercase text-absolute-black/55">Envio EU</span>
+                    <div className="flex items-center gap-1">
+                      <span className="text-oxidized-gold text-[11px]" aria-hidden="true">&#10055;</span>
+                      <span className="font-mono text-[9px] tracking-wider uppercase text-absolute-black/55 leading-tight">Envio EU</span>
                     </div>
                   </div>
                 </div>

@@ -2,29 +2,36 @@
 
 import { useEffect } from 'react';
 import Lenis from 'lenis';
+import gsap from 'gsap';
+import ScrollTrigger from 'gsap/ScrollTrigger';
+
+gsap.registerPlugin(ScrollTrigger);
 
 export default function SmoothScroll({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    // Inicializa o Lenis com as configurações de luxo solicitadas
     const lenis = new Lenis({
       lerp: 0.05,
       wheelMultiplier: 1,
       smoothWheel: true,
     });
 
-    // Reset ao topo imediatamente ao montar (navegação de volta)
+    // Reset ao topo imediatamente ao montar
     lenis.scrollTo(0, { immediate: true });
 
-    // Loop de animação (Request Animation Frame) otimizado para performance máxima
-    function raf(time: number) {
-      lenis.raf(time);
-      requestAnimationFrame(raf);
-    }
+    // Sincroniza Lenis com GSAP ScrollTrigger — sem isto o pin horizontal dessincronia
+    lenis.on('scroll', ScrollTrigger.update);
 
-    requestAnimationFrame(raf);
+    const tickerFn = (time: number) => lenis.raf(time * 1000);
+    gsap.ticker.add(tickerFn);
+    gsap.ticker.lagSmoothing(0);
 
-    // Limpeza ao desmontar o componente
+    // Recalcula triggers depois do reset ao topo
+    const rafId = requestAnimationFrame(() => ScrollTrigger.refresh());
+
     return () => {
+      cancelAnimationFrame(rafId);
+      lenis.off('scroll', ScrollTrigger.update);
+      gsap.ticker.remove(tickerFn);
       lenis.destroy();
     };
   }, []);

@@ -102,9 +102,9 @@ export default function ReviewsSection() {
   }, { scope: sectionRef });
 
   return (
-    <section ref={sectionRef} className="py-24 md:py-32 px-8 md:px-16 bg-raw-linen border-t border-absolute-black/10">
+    <section ref={sectionRef} className="py-12 md:py-32 px-4 md:px-16 bg-raw-linen border-t border-absolute-black/10">
       {/* Header */}
-      <div ref={headerRef} className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-16" style={{ opacity: 0 }}>
+      <div ref={headerRef} className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-8 md:mb-16" style={{ opacity: 0 }}>
         <div className="flex flex-col gap-3">
           <p className="font-mono text-[13px] tracking-[0.45em] uppercase text-absolute-black/90">
             Clientes SOLARIS
@@ -127,12 +127,14 @@ export default function ReviewsSection() {
         </div>
       </div>
 
-      {/* Grid */}
-      <div className="reviews-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-absolute-black/10">
+      {/* Grid — mobile: scroll horizontal limitado a 2 cards visíveis */}
+      <div className="reviews-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-px bg-absolute-black/10
+        max-md:flex max-md:overflow-x-auto max-md:gap-0 max-md:snap-x max-md:snap-mandatory max-md:bg-transparent">
         {REVIEWS.map((review) => (
           <div
             key={review.id}
-            className="review-card bg-raw-linen p-8 flex flex-col gap-5"
+            className="review-card bg-raw-linen p-5 md:p-8 flex flex-col gap-4 md:gap-5
+              max-md:shrink-0 max-md:w-[82vw] max-md:snap-start max-md:border max-md:border-absolute-black/10"
             style={{ opacity: 0 }}
           >
             {/* Stars + product */}
