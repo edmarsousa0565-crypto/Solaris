@@ -58,6 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           sortOrder: r.sort_order || 0,
           shippingMethod: r.shipping_method || '',
           variantNames: r.variant_names || {},
+          excludedImages: r.excluded_images || [],
         }));
 
       res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
@@ -87,7 +88,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (metadata?.category !== undefined)       payload.category           = metadata.category || null;
         if (metadata?.collection !== undefined)     payload.collection         = metadata.collection || null;
         if (metadata?.shippingMethod !== undefined) payload.shipping_method    = metadata.shippingMethod || null;
-        if (metadata?.variantNames !== undefined)   payload.variant_names      = metadata.variantNames || {};
+        if (metadata?.variantNames !== undefined)    payload.variant_names      = metadata.variantNames || {};
+        if (metadata?.excludedImages !== undefined) payload.excluded_images    = metadata.excludedImages || [];
         if (metadata?.isNew !== undefined)          payload.is_new             = metadata.isNew;
         if (metadata?.isSoldOut !== undefined)      payload.is_sold_out        = metadata.isSoldOut;
         if (metadata?.sortOrder !== undefined)      payload.sort_order         = metadata.sortOrder;

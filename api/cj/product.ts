@@ -34,7 +34,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           if (!sb) return null;
           const { data } = await sb
             .from('featured_products')
-            .select('custom_name,custom_description,custom_image,custom_price,category,collection,variant_names')
+            .select('custom_name,custom_description,custom_image,custom_price,category,collection,variant_names,excluded_images')
             .eq('pid', String(pid))
             .single();
           return data;
@@ -91,13 +91,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const customCollection = supabaseRow?.collection || 'Solaris';
     const variantNames: Record<string, string> = supabaseRow?.variant_names || {};
 
+    const excludedImages: string[] = supabaseRow?.excluded_images || [];
+    const allImages: string[] = p.productImageSet?.length ? p.productImageSet : [customImage];
+    const filteredImages = allImages.filter((img: string) => !excludedImages.includes(img));
+
     const product = {
       id: p.pid,
       name: customName,
       price: `€${customPrice.toFixed(2)}`,
       priceNum: customPrice,
       image: customImage,
-      images: p.productImageSet?.length ? p.productImageSet : [customImage],
+      images: filteredImages.length ? filteredImages : [customImage],
+      excludedImages,
       category: customCategory,
       collection: customCollection,
       description: customDesc,

@@ -57,6 +57,7 @@ export default function AdminPage() {
   const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<string>('');
   const [previewColor, setPreviewColor] = useState<string | null>(null);
+  const [excludedImages, setExcludedImages] = useState<string[]>([]);
 
   const query = category === 'All' ? search : `${category} ${search}`.trim();
   const { products, total, loading } = useCJProducts({ query, page, pageSize: 24, searchMode });
@@ -151,6 +152,7 @@ export default function AdminPage() {
             collection: customCollection || undefined,
             shippingMethod: customShipping || undefined,
             variantNames: Object.keys(customVariantNames).length > 0 ? customVariantNames : undefined,
+            excludedImages: excludedImages.length > 0 ? excludedImages : [],
           }
         }),
       });
@@ -220,6 +222,7 @@ export default function AdminPage() {
       setCustomCollection(existing.collection || '');
       setCustomShipping((existing as any).shippingMethod || '');
       setCustomVariantNames((existing as any).variantNames || {});
+      setExcludedImages((existing as any).excludedImages || []);
     } else {
       setCustomName('');
       setCustomDesc('');
@@ -267,6 +270,7 @@ export default function AdminPage() {
     setCustomCollection('');
     setCustomShipping('');
     setCustomVariantNames({});
+    setExcludedImages([]);
     setEditingVid(null);
     setShippingMethods([]);
     setPreviewImage('');
@@ -1175,16 +1179,45 @@ export default function AdminPage() {
                     ) : (
                       (productDetail?.images?.length ? productDetail.images : [viewingProduct.image]).map((img: string, i: number) => {
                         const current = previewImage || viewingProduct.image;
+                        const isExcluded = excludedImages.includes(img);
                         return (
-                          <button
-                            key={i}
-                            onClick={() => setPreviewImage(img)}
-                            className={`w-[52px] aspect-square border-2 transition-all shrink-0 overflow-hidden ${
-                              current === img ? 'border-absolute-black' : 'border-transparent opacity-40 hover:opacity-75 hover:border-absolute-black/30'
-                            }`}
-                          >
-                            <img src={img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                          </button>
+                          <div key={i} className="relative group/thumb shrink-0">
+                            <button
+                              onClick={() => !isExcluded && setPreviewImage(img)}
+                              className={`w-[52px] aspect-square border-2 transition-all overflow-hidden block ${
+                                isExcluded
+                                  ? 'border-red-300 opacity-25 cursor-default'
+                                  : current === img
+                                    ? 'border-absolute-black'
+                                    : 'border-transparent opacity-40 hover:opacity-75 hover:border-absolute-black/30'
+                              }`}
+                            >
+                              <img src={img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                            </button>
+                            {/* Remove / restore button */}
+                            <button
+                              onClick={() => {
+                                if (isExcluded) {
+                                  setExcludedImages(prev => prev.filter(u => u !== img));
+                                } else {
+                                  setExcludedImages(prev => [...prev, img]);
+                                  if ((previewImage || viewingProduct.image) === img) {
+                                    const allImgs = productDetail?.images?.length ? productDetail.images : [viewingProduct.image];
+                                    const next = allImgs.find((u: string) => u !== img && !excludedImages.includes(u));
+                                    if (next) setPreviewImage(next);
+                                  }
+                                }
+                              }}
+                              title={isExcluded ? 'Restaurar imagem' : 'Remover da galeria'}
+                              className={`absolute top-0.5 right-0.5 w-4 h-4 flex items-center justify-center font-mono text-[9px] leading-none transition-all ${
+                                isExcluded
+                                  ? 'bg-green-500 text-stark-white opacity-80 hover:opacity-100'
+                                  : 'bg-red-500 text-stark-white opacity-0 group-hover/thumb:opacity-90 hover:!opacity-100'
+                              }`}
+                            >
+                              {isExcluded ? '↺' : '×'}
+                            </button>
+                          </div>
                         );
                       })
                     )}
@@ -1563,16 +1596,55 @@ export default function AdminPage() {
                           const base: string[] = productDetail?.images?.length ? productDetail.images : [viewingProduct.image];
                           const all = customImage && !base.includes(customImage) ? [customImage, ...base] : base;
                           const sel = customImage || viewingProduct.image;
-                          return all.map((img: string, i: number) => (
-                            <button
-                              key={i}
-                              onClick={() => { setCustomImage(img); setPreviewImage(img); }}
-                              className={`relative w-12 h-12 border-2 overflow-hidden transition-all shrink-0 ${sel === img ? 'border-absolute-black' : 'border-transparent opacity-35 hover:opacity-70'}`}
-                            >
-                              <img src={img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                              {sel === img && <div className="absolute bottom-0 left-0 right-0 bg-solar-yellow font-mono text-[7px] text-center text-absolute-black py-0.5">CAPA</div>}
-                            </button>
-                          ));
+                          return all.map((img: string, i: number) => {
+                            const isExcluded = excludedImages.includes(img);
+                            return (
+                              <div key={i} className="relative group/pick shrink-0">
+                                <button
+                                  onClick={() => { if (!isExcluded) { setCustomImage(img); setPreviewImage(img); } }}
+                                  className={`relative w-12 h-12 border-2 overflow-hidden transition-all block ${
+                                    isExcluded
+                                      ? 'border-red-300 opacity-20 cursor-default'
+                                      : sel === img
+                                        ? 'border-absolute-black'
+                                        : 'border-transparent opacity-35 hover:opacity-70'
+                                  }`}
+                                >
+                                  <img src={img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                                  {sel === img && !isExcluded && (
+                                    <div className="absolute bottom-0 left-0 right-0 bg-solar-yellow font-mono text-[7px] text-center text-absolute-black py-0.5">CAPA</div>
+                                  )}
+                                  {isExcluded && (
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                      <span className="font-mono text-[9px] text-red-500 bg-raw-linen/80 px-1">excluída</span>
+                                    </div>
+                                  )}
+                                </button>
+                                {/* Toggle exclude */}
+                                <button
+                                  onClick={() => {
+                                    if (isExcluded) {
+                                      setExcludedImages(prev => prev.filter(u => u !== img));
+                                    } else {
+                                      setExcludedImages(prev => [...prev, img]);
+                                      if (sel === img) {
+                                        const next = all.find((u: string) => u !== img && !excludedImages.includes(u));
+                                        if (next) { setCustomImage(next); setPreviewImage(next); }
+                                      }
+                                    }
+                                  }}
+                                  title={isExcluded ? 'Restaurar' : 'Remover da galeria'}
+                                  className={`absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center font-mono text-[9px] leading-none border transition-all z-10 ${
+                                    isExcluded
+                                      ? 'bg-green-500 border-green-600 text-stark-white opacity-80 hover:opacity-100'
+                                      : 'bg-raw-linen border-red-300 text-red-500 opacity-0 group-hover/pick:opacity-100 hover:!opacity-100 hover:bg-red-500 hover:text-stark-white'
+                                  }`}
+                                >
+                                  {isExcluded ? '↺' : '×'}
+                                </button>
+                              </div>
+                            );
+                          });
                         })()}
                       </div>
                     </div>
