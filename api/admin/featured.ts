@@ -58,7 +58,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           sortOrder: r.sort_order || 0,
           shippingMethod: r.shipping_method || '',
           variantNames: r.variant_names || {},
-          excludedImages: r.excluded_images || [],
+          excludedImages: r.excluded_images ?? [],
         }));
 
       res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
@@ -94,9 +94,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (metadata?.isSoldOut !== undefined)      payload.is_sold_out        = metadata.isSoldOut;
         if (metadata?.sortOrder !== undefined)      payload.sort_order         = metadata.sortOrder;
 
-        const { error } = await supabase
+        let { error } = await supabase
           .from('featured_products')
           .upsert(payload, { onConflict: 'pid' });
+
+        // Se a coluna excluded_images ainda não existe no schema, tenta sem ela
+        if (error?.message?.includes('excluded_images')) {
+          const { excluded_images: _drop, ...payloadWithout } = payload;
+          const retry = await supabase
+            .from('featured_products')
+            .upsert(payloadWithout, { onConflict: 'pid' });
+          error = retry.error;
+        }
 
         if (error) throw new Error(error.message);
 
