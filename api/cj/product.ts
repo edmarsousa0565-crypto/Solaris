@@ -14,7 +14,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { pid } = req.query;
+  const { pid, includeShipping, country = 'PT' } = req.query;
 
   if (!pid) {
     return res.status(400).json({ error: 'Missing pid parameter' });
@@ -23,13 +23,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const token = await getCJToken();
 
-    // Fetch CJ data e Supabase custom data em paralelo
-    const [cjResponse, supabaseRow] = await Promise.all([
+    // Fetch CJ data, Supabase custom data, e opcionalmente shipping em paralelo
+    const [cjResponse, supabaseRow, shippingData] = await Promise.all([
       fetch(`${CJ_BASE_URL}/product/query?pid=${pid}`, {
-        headers: {
-          'CJ-Access-Token': token,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'CJ-Access-Token': token, 'Content-Type': 'application/json' },
       }),
       (async () => {
         try {
@@ -45,6 +42,34 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           return null;
         }
       })(),
+      // Shipping: só busca quando pedido (para evitar latência extra na loja)
+      includeShipping ? (async () => {
+        try {
+          const shippingRes = await fetch(`${CJ_BASE_URL}/logistic/freightCalculate`, {
+            method: 'POST',
+            headers: { 'CJ-Access-Token': token, 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              startCountryCode: 'CN',
+              endCountryCode: String(country),
+              products: [{ quantity: 1, pid: String(pid) }],
+            }),
+          });
+          const sd = await shippingRes.json();
+          if (!sd.result) return [];
+          return (sd.data || []).map((m: any) => ({
+            id: m.logisticName,
+            name: m.logisticName,
+            price: parseFloat(m.logisticPrice || 0),
+            priceFormatted: parseFloat(m.logisticPrice || 0) === 0 ? 'Grátis' : `€${parseFloat(m.logisticPrice || 0).toFixed(2)}`,
+            estimatedDelivery: m.minDeliveryDays && m.maxDeliveryDays
+              ? `${m.minDeliveryDays}–${m.maxDeliveryDays} dias úteis`
+              : 'Consultar',
+            tracking: m.tracking ?? true,
+          }));
+        } catch {
+          return [];
+        }
+      })() : Promise.resolve(null),
     ]);
 
     const data = await cjResponse.json();
@@ -112,7 +137,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     };
 
     res.setHeader('Cache-Control', 's-maxage=600, stale-while-revalidate');
-    return res.status(200).json({ product });
+    return res.status(200).json({
+      product,
+      ...(shippingData !== null ? { shippingMethods: shippingData } : {}),
+    });
   } catch (err: any) {
     console.error('CJ product detail error:', err);
     return res.status(500).json({ error: err.message });

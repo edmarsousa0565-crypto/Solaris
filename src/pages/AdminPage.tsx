@@ -236,21 +236,15 @@ export default function AdminPage() {
     setShippingMethods([]);
     setShippingLoading(true);
     try {
-      const [detailRes, shippingRes] = await Promise.all([
-        fetch(`/api/cj/product?pid=${product.cjPid}`),
-        fetch(`/api/cj/shipping?pid=${product.cjPid}&country=PT`),
-      ]);
-      const [detailData, shippingData] = await Promise.all([
-        detailRes.json(),
-        shippingRes.json(),
-      ]);
-      if (detailData.product) {
-        setProductDetail(detailData.product);
+      const res = await fetch(`/api/cj/product?pid=${product.cjPid}&includeShipping=true&country=PT`);
+      const data = await res.json();
+      if (data.product) {
+        setProductDetail(data.product);
         if (!existing?.selectedVids) {
-          setSelectedVids(detailData.product.variants?.map((v: any) => v.vid) || []);
+          setSelectedVids(data.product.variants?.map((v: any) => v.vid) || []);
         }
       }
-      setShippingMethods(shippingData.methods || []);
+      setShippingMethods(data.shippingMethods || []);
     } catch (err) {
       console.error(err);
     } finally {
