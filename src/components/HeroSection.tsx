@@ -2,6 +2,7 @@
 
 import { useRef } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'motion/react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import ScrollTrigger from 'gsap/ScrollTrigger';
@@ -21,22 +22,21 @@ const LETTER_ANIMS = [
 ];
 
 export default function HeroSection() {
-  const sectionRef  = useRef<HTMLElement>(null);
-  const titleRef    = useRef<HTMLDivElement>(null);
-  const imageRef    = useRef<HTMLImageElement>(null);
-  const bottomRef   = useRef<HTMLDivElement>(null);
-  const subtitleRef = useRef<HTMLDivElement>(null);
-  const ctaRef      = useRef<HTMLDivElement>(null);
-  const trustRef    = useRef<HTMLDivElement>(null);
+  const sectionRef = useRef<HTMLElement>(null);
+  const titleRef   = useRef<HTMLDivElement>(null);
+  const imageRef   = useRef<HTMLImageElement>(null);
+  const panelRef   = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
     if (!sectionRef.current) return;
 
+    // Imagem entra
     gsap.fromTo(imageRef.current,
-      { scale: 1.06, opacity: 0 },
-      { scale: 1, opacity: 1, duration: 2.8, ease: 'power2.out', delay: 0.1 }
+      { scale: 1.05, opacity: 0 },
+      { scale: 1, opacity: 1, duration: 2.6, ease: 'power2.out', delay: 0.05 }
     );
 
+    // Letras dispersas → posição
     LETTER_ANIMS.forEach((anim, i) => {
       gsap.fromTo(`.hero-letter-${i}`,
         { x: anim.x, y: anim.y, rotation: anim.rotation, opacity: 0 },
@@ -44,26 +44,16 @@ export default function HeroSection() {
       );
     });
 
-    gsap.fromTo(subtitleRef.current,
-      { opacity: 0, y: 18 },
-      { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out', delay: 0.9 }
-    );
-    gsap.fromTo(ctaRef.current,
-      { opacity: 0, y: 18 },
-      { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', delay: 1.1 }
-    );
-    gsap.fromTo(trustRef.current,
-      { opacity: 0 },
-      { opacity: 1, duration: 0.8, ease: 'power3.out', delay: 1.4 }
-    );
-    gsap.fromTo(bottomRef.current,
-      { opacity: 0, y: 24 },
-      { opacity: 1, y: 0, duration: 0.9, ease: 'power3.out', delay: 0.9 }
+    // Painel de fundo sobe
+    gsap.fromTo(panelRef.current,
+      { y: 80, opacity: 0 },
+      { y: 0, opacity: 1, duration: 1.0, ease: 'expo.out', delay: 1.1 }
     );
 
+    // Fade ao scroll
     gsap.to(titleRef.current, {
-      opacity: 0, y: -60,
-      scrollTrigger: { trigger: document.body, start: 'top top', end: '+=600', scrub: 1 }
+      opacity: 0, y: -50,
+      scrollTrigger: { trigger: document.body, start: 'top top', end: '+=550', scrub: 1 }
     });
   }, { scope: sectionRef });
 
@@ -71,10 +61,10 @@ export default function HeroSection() {
     <section
       ref={sectionRef}
       className="w-screen h-full flex flex-col items-center justify-center relative overflow-hidden"
-      style={{ backgroundColor: '#0c0b09' }}
+      style={{ backgroundColor: '#e8e4dc' }}
     >
 
-      {/* IMAGEM */}
+      {/* ── IMAGEM — mobile: sem overlay escuro ───────────────── */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <img
           ref={imageRef}
@@ -82,58 +72,71 @@ export default function HeroSection() {
           alt=""
           aria-hidden="true"
           className="w-full h-full object-cover object-center"
-          style={{ opacity: 0, filter: 'blur(1px)' }}
+          style={{ opacity: 0 }}
+        />
+        {/* Overlay: quase nenhum no mobile, mais escuro no desktop */}
+        <div
+          className="absolute inset-0"
+          style={{
+            background: [
+              'linear-gradient(180deg,',
+              '  rgba(8,6,4,0.10) 0%,',     /* mobile: quase transparente */
+              '  rgba(8,6,4,0.05) 40%,',
+              '  rgba(8,6,4,0.30) 75%,',
+              '  rgba(8,6,4,0.65) 100%',
+              ')',
+            ].join(''),
+          }}
+        />
+        {/* Desktop: overlay mais rico */}
+        <div
+          className="absolute inset-0 hidden md:block"
+          style={{
+            background: 'linear-gradient(180deg, rgba(8,6,4,0.45) 0%, rgba(8,6,4,0.15) 45%, rgba(8,6,4,0.60) 100%)',
+          }}
         />
       </div>
 
-      {/* GRADIENT OVERLAY — mobile: mais escuro em baixo para legibilidade */}
+      {/* ── CORNER MARKS — detalhe de arquivo fotográfico ──────── */}
+      {/* Visíveis só no mobile — editorial */}
+      <div className="md:hidden absolute top-5 left-5 z-20 w-7 h-7 border-t border-l border-white/40 pointer-events-none" />
+      <div className="md:hidden absolute top-5 right-5 z-20 w-7 h-7 border-t border-r border-white/40 pointer-events-none" />
+
+      {/* ── SEASON STAMP — top right ────────────────────────────── */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.85 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ delay: 1.3, duration: 0.5, ease: 'backOut' }}
+        className="md:hidden absolute top-[22px] left-1/2 -translate-x-1/2 z-20 pointer-events-none"
+      >
+        <div className="flex items-center gap-1.5 border border-white/30 bg-black/10 backdrop-blur-sm px-3 py-1">
+          <div className="w-1 h-1 rounded-full bg-solar-yellow" />
+          <span className="font-mono text-[9px] tracking-[0.45em] uppercase text-white/70">
+            SS '25
+          </span>
+          <div className="w-1 h-1 rounded-full bg-solar-yellow" />
+        </div>
+      </motion.div>
+
+      {/* ── TÍTULO SOLARIS ───────────────────────────────────────── */}
       <div
-        className="absolute inset-0 pointer-events-none"
-        style={{
-          background: [
-            'linear-gradient(180deg,',
-            '  rgba(8,6,4,0.55) 0%,',
-            '  rgba(8,6,4,0.10) 38%,',
-            '  rgba(8,6,4,0.10) 55%,',
-            '  rgba(8,6,4,0.75) 80%,',
-            '  rgba(8,6,4,0.92) 100%',
-            ')',
-          ].join(''),
-        }}
-      />
-
-      {/* Grain sutil */}
-      <div
-        className="absolute inset-0 pointer-events-none opacity-[0.025]"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-          backgroundSize: '128px 128px',
-        }}
-      />
-
-      {/* ── TÍTULO CENTRAL ─────────────────────────────────────── */}
-      <div ref={titleRef} className="relative flex flex-col items-center justify-center gap-4 md:gap-6 z-10 w-full px-4 md:px-6">
-
-        {/* Eyebrow — só desktop */}
-        <p
-          ref={subtitleRef}
-          className="hidden md:block font-mono text-[11px] tracking-[0.55em] uppercase text-white/40"
-          style={{ opacity: 0 }}
-        >
-          Coleção SS 2025
-        </p>
-
-        {/* SOLARIS */}
-        <h1 className="flex" style={{ gap: '0.04em' }}>
+        ref={titleRef}
+        className="relative z-10 flex flex-col items-center justify-center w-full px-3 md:px-6"
+        /* Mobile: empurra o título ligeiramente acima do painel */
+        style={{ paddingBottom: 'clamp(160px, 35vw, 220px)' }}
+      >
+        <h1 className="flex" style={{ gap: '0.02em' }}>
           {LETTERS.map((letter, i) => (
             <span
               key={i}
-              className={`hero-letter-${i} inline-block leading-none font-serif font-light uppercase antialiased will-change-transform text-white`}
+              className={`hero-letter-${i} inline-block leading-none font-serif font-light uppercase antialiased will-change-transform`}
               style={{
                 opacity: 0,
-                fontSize: 'clamp(3.2rem, 19vw, 11vw)',
-                textShadow: '0 2px 60px rgba(0,0,0,0.35)',
-                letterSpacing: '-0.01em',
+                fontSize: 'clamp(3.8rem, 20.5vw, 11vw)',
+                letterSpacing: '-0.015em',
+                /* Mobile: outline puro — imagem aparece dentro das letras */
+                WebkitTextStroke: '1.5px rgba(255,255,255,0.88)',
+                color: 'transparent',
               }}
             >
               {letter}
@@ -141,82 +144,103 @@ export default function HeroSection() {
           ))}
         </h1>
 
-        {/* Linha decorativa — separador elegante */}
-        <div
-          ref={subtitleRef}
-          className="flex items-center gap-4 w-full max-w-xs md:max-w-md"
-          style={{ opacity: 0 }}
-        >
-          <div className="flex-1 h-[0.5px] bg-white/20" />
-          <p className="font-serif italic text-[clamp(0.8rem,3.2vw,1.1rem)] text-white/65 tracking-wider text-center font-light whitespace-nowrap">
+        {/* Linha + subtítulo — mobile: discreto, desktop: mais visível */}
+        <div className="flex items-center gap-3 mt-3 md:mt-5 w-full max-w-[340px] md:max-w-none">
+          <div className="flex-1 h-[0.5px] bg-white/25" />
+          <p className="font-serif italic text-[clamp(0.75rem,2.8vw,1rem)] text-white/60 md:text-white/80 tracking-wide font-light whitespace-nowrap">
             A fluidez do verão europeu
           </p>
-          <div className="flex-1 h-[0.5px] bg-white/20" />
+          <div className="flex-1 h-[0.5px] bg-white/25" />
         </div>
 
-        {/* CTA */}
-        <div ref={ctaRef} style={{ opacity: 0 }} className="mt-1 md:mt-2">
+        {/* CTA — desktop: visível aqui / mobile: no painel de baixo */}
+        <div className="hidden md:block mt-8">
           <Link
             to="/shop"
-            className="group relative flex items-center gap-4 md:gap-5 font-mono text-[10px] md:text-[11px] tracking-[0.4em] uppercase overflow-hidden"
+            className="group flex items-center gap-5 bg-solar-yellow text-absolute-black font-mono text-[11px] tracking-[0.4em] uppercase px-10 py-5 hover:bg-white transition-colors duration-300"
           >
-            {/* Mobile: estilo outline dourado / Desktop: filled amarelo */}
-            <span className="
-              relative z-10 flex items-center gap-4 md:gap-5
-              px-8 py-4 md:px-10 md:py-5
-              border border-white/30 text-white/90
-              md:bg-solar-yellow md:text-absolute-black md:border-solar-yellow
-              transition-all duration-500
-              group-hover:border-solar-yellow group-hover:text-solar-yellow
-              md:group-hover:bg-white md:group-hover:border-white md:group-hover:text-absolute-black
-            ">
-              Explorar Coleção
-              <span className="group-hover:translate-x-1.5 transition-transform duration-300">→</span>
-            </span>
+            Explorar Coleção
+            <span className="group-hover:translate-x-1.5 transition-transform duration-300">→</span>
           </Link>
+        </div>
+
+        {/* Trust signals — desktop */}
+        <div className="hidden md:flex items-center justify-center gap-6 mt-8 flex-wrap">
+          {[
+            { symbol: '✦', label: 'Entrega 7–14 dias' },
+            { symbol: '↩', label: 'Devolução 30 dias' },
+            { symbol: '◈', label: 'Pagamento Seguro' },
+          ].map(({ symbol, label }) => (
+            <div key={label} className="flex items-center gap-2">
+              <span className="text-solar-yellow text-[10px]">{symbol}</span>
+              <span className="font-mono text-[10px] tracking-[0.25em] uppercase text-white/50">{label}</span>
+            </div>
+          ))}
         </div>
       </div>
 
-      {/* ── BOTTOM BAR — trust signals + scroll ────────────────── */}
+      {/* ── PAINEL MOBILE — sobe do fundo como folha de papel ──── */}
       <div
-        ref={bottomRef}
-        className="absolute bottom-0 left-0 right-0 z-10 pb-6 md:pb-8 px-6 md:px-12"
+        ref={panelRef}
+        className="md:hidden absolute bottom-0 left-0 right-0 z-20 pointer-events-auto"
         style={{ opacity: 0 }}
       >
-        {/* Trust signals — mobile: horizontal scroll sem wrap */}
+        {/* Borda superior decorativa */}
+        <div className="flex items-center gap-0 px-6 mb-0">
+          <div className="flex-1 h-[0.5px] bg-white/20" />
+          <div className="w-1.5 h-1.5 rotate-45 border border-white/30 bg-transparent mx-3 shrink-0" />
+          <div className="flex-1 h-[0.5px] bg-white/20" />
+        </div>
+
+        {/* Painel linen */}
         <div
-          ref={trustRef}
-          className="flex items-center justify-center gap-5 md:gap-8 overflow-x-auto scrollbar-none pb-1"
-          style={{ opacity: 0 }}
+          className="mx-0 px-6 pt-5 pb-8"
+          style={{
+            background: 'linear-gradient(180deg, rgba(232,228,220,0.92) 0%, rgba(232,228,220,0.98) 100%)',
+            backdropFilter: 'blur(16px) saturate(1.2)',
+            WebkitBackdropFilter: 'blur(16px) saturate(1.2)',
+          }}
         >
-          {[
-            { symbol: '✦', label: 'Entrega 7–14 dias' },
-            { symbol: '·', label: '·' },
-            { symbol: '↩', label: 'Devolução 30 dias' },
-            { symbol: '·', label: '·' },
-            { symbol: '◈', label: 'Pagamento Seguro' },
-          ].map(({ symbol, label }, i) =>
-            symbol === '·' ? (
-              <span key={i} className="text-white/15 text-xs shrink-0">·</span>
-            ) : (
-              <div key={i} className="flex items-center gap-2 shrink-0">
-                <span className="text-solar-yellow text-[10px] leading-none">{symbol}</span>
-                <span className="font-mono text-[9px] md:text-[10px] tracking-[0.25em] uppercase text-white/45 whitespace-nowrap">
+          {/* Tagline */}
+          <p className="font-serif italic text-[1.05rem] text-absolute-black/75 leading-snug mb-5">
+            Descubra a nova coleção —<br />
+            <span className="font-mono not-italic text-[10px] tracking-[0.35em] uppercase text-absolute-black/40">
+              Verão Europeu 2025
+            </span>
+          </p>
+
+          {/* CTA principal */}
+          <Link
+            to="/shop"
+            className="group flex items-center justify-between w-full bg-absolute-black text-stark-white font-mono text-[11px] tracking-[0.4em] uppercase px-6 py-4 mb-4 hover:bg-deep-night transition-colors"
+          >
+            Explorar Coleção
+            <span className="group-hover:translate-x-1 transition-transform">→</span>
+          </Link>
+
+          {/* Trust signals — linha compacta */}
+          <div className="flex items-center justify-between">
+            {[
+              ['✦', '7–14 dias'],
+              ['↩', '30 dias'],
+              ['◈', 'Seguro'],
+            ].map(([symbol, label]) => (
+              <div key={label} className="flex items-center gap-1.5">
+                <span className="text-solar-yellow text-[9px] leading-none">{symbol}</span>
+                <span className="font-mono text-[8.5px] tracking-[0.2em] uppercase text-absolute-black/45">
                   {label}
                 </span>
               </div>
-            )
-          )}
-        </div>
-
-        {/* Scroll indicator */}
-        <div className="flex justify-center mt-5">
-          <div className="flex flex-col items-center gap-2 opacity-20">
-            <span className="font-mono text-[8px] tracking-[0.4em] uppercase text-white">scroll</span>
-            <div className="w-[1px] h-7 bg-white/50 relative overflow-hidden">
-              <div className="w-full h-full bg-white absolute top-0 animate-[scroll-down_2s_ease-in-out_infinite]" />
-            </div>
+            ))}
           </div>
+        </div>
+      </div>
+
+      {/* Scroll indicator — só desktop */}
+      <div className="hidden md:flex absolute bottom-7 left-1/2 -translate-x-1/2 flex-col items-center opacity-20 z-10 pointer-events-none">
+        <span className="font-mono text-[8px] tracking-[0.4em] uppercase text-white mb-2">scroll</span>
+        <div className="w-[1px] h-7 bg-white/50 relative overflow-hidden">
+          <div className="w-full h-full bg-white absolute top-0 animate-[scroll-down_2s_ease-in-out_infinite]" />
         </div>
       </div>
 
