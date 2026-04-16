@@ -50,11 +50,15 @@ async function createCJOrder(session: Stripe.Checkout.Session) {
   // Resolve vid para cada item — usa o metadata do Stripe se existir,
   // senão consulta CJ pelo pid para obter o primeiro variant disponível
   const products: { vid: string; quantity: number }[] = [];
+  const pidsInOrder: string[] = [];
+
   for (const item of lineItems) {
     const meta = (item as any).price?.product?.metadata || {};
     const variantId: string = meta.variantId || '';
     const cjPid: string = meta.cjPid || '';
     const quantity = item.quantity || 1;
+
+    if (cjPid) pidsInOrder.push(cjPid);
 
     if (variantId) {
       products.push({ vid: variantId, quantity });
@@ -72,7 +76,27 @@ async function createCJOrder(session: Stripe.Checkout.Session) {
     return null;
   }
 
-  const payload = {
+  // Busca o método de envio configurado no admin para o(s) produto(s) da encomenda
+  let shippingNameCode: string | undefined;
+  if (pidsInOrder.length > 0) {
+    try {
+      const sb = getSupabase();
+      const { data: fpRows } = await sb
+        .from('featured_products')
+        .select('shipping_method')
+        .in('pid', pidsInOrder)
+        .not('shipping_method', 'is', null)
+        .limit(1);
+      if (fpRows?.[0]?.shipping_method) {
+        shippingNameCode = fpRows[0].shipping_method;
+        console.log(`Método de envio configurado: ${shippingNameCode}`);
+      }
+    } catch (e) {
+      console.warn('Não foi possível obter shipping_method:', e);
+    }
+  }
+
+  const payload: Record<string, any> = {
     orderNumber: `SOL-${session.id.slice(-8).toUpperCase()}`,
     shippingCountry: shipping.address.country,
     shippingCustomerName: shipping.name,
@@ -83,6 +107,10 @@ async function createCJOrder(session: Stripe.Checkout.Session) {
     shippingPhone: session.customer_details?.phone || '',
     products,
   };
+
+  if (shippingNameCode) {
+    payload.shippingNameCode = shippingNameCode;
+  }
 
   const response = await fetch(`${CJ_BASE_URL}/shopping/order/createOrder`, {
     method: 'POST',
