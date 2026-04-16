@@ -24,6 +24,7 @@ export default function AdminPage() {
   const [featuredPids, setFeaturedPids] = useState<string[]>([]);
   const [featuredProducts, setFeaturedProducts] = useState<CJProduct[]>([]);
   const [saving, setSaving] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [reordering, setReordering] = useState(false);
   const [tab, setTab] = useState<'browse' | 'store' | 'collections' | 'orders'>('browse');
 
@@ -65,7 +66,7 @@ export default function AdminPage() {
   // Carrega produtos em destaque ao autenticar
   const loadFeatured = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/featured');
+      const res = await fetch(`/api/admin/featured?t=${Date.now()}`);
       const data = await res.json();
       if (data.error && data.error.includes('SUPABASE')) { setKvError(true); return; }
       setFeaturedPids(data.pids || []);
@@ -136,6 +137,7 @@ export default function AdminPage() {
     const pid = product.cjPid;
     const action = featuredPids.includes(pid) && !vids ? 'remove' : 'add';
     setSaving(pid);
+    setSaveError(null);
     try {
       const res = await fetch('/api/admin/featured', {
         method: 'POST',
@@ -159,15 +161,17 @@ export default function AdminPage() {
       const data = await res.json();
       if (data.ok) {
         if (action === 'add') {
-          await loadFeatured(); // Atualiza estado com dados reais guardados na DB
+          await loadFeatured();
           if (vids !== undefined) closeModal();
         } else {
           setFeaturedPids(data.pids);
           setFeaturedProducts(prev => prev.filter(p => p.cjPid !== pid));
         }
+      } else {
+        setSaveError(data.error || 'Erro desconhecido ao guardar');
       }
-    } catch {
-      /* silent */
+    } catch (err: any) {
+      setSaveError(err?.message || 'Erro de ligação');
     } finally {
       setSaving(null);
     }
@@ -1669,16 +1673,24 @@ export default function AdminPage() {
               {/* Footer */}
               <div className="shrink-0 border-t border-absolute-black/10 px-6 py-4 flex items-center justify-between gap-4 bg-raw-linen flex-wrap">
                 <div className="flex flex-col gap-0.5">
-                  <p className="font-mono text-[13px] text-absolute-black/60">
-                    <strong className="text-absolute-black">{selectedVids.length}</strong>
-                    {(productDetail?.variants?.length ?? 0) > 0 && <span className="text-absolute-black/35"> / {productDetail.variants.length}</span>}
-                    {' '}variantes ativas
-                  </p>
-                  <p className="font-mono text-[11px] text-absolute-black/30 tracking-widest">
-                    {customShipping
-                      ? `Envio: ${shippingMethods.find(m => m.id === customShipping)?.name || customShipping}`
-                      : 'Envio: automático'}
-                  </p>
+                  {saveError ? (
+                    <p className="font-mono text-[12px] text-red-600 tracking-widest">
+                      Erro: {saveError}
+                    </p>
+                  ) : (
+                    <>
+                      <p className="font-mono text-[13px] text-absolute-black/60">
+                        <strong className="text-absolute-black">{selectedVids.length}</strong>
+                        {(productDetail?.variants?.length ?? 0) > 0 && <span className="text-absolute-black/35"> / {productDetail.variants.length}</span>}
+                        {' '}variantes ativas
+                      </p>
+                      <p className="font-mono text-[11px] text-absolute-black/30 tracking-widest">
+                        {customShipping
+                          ? `Envio: ${shippingMethods.find(m => m.id === customShipping)?.name || customShipping}`
+                          : 'Envio: automático'}
+                      </p>
+                    </>
+                  )}
                 </div>
                 <div className="flex gap-3">
                   <button
