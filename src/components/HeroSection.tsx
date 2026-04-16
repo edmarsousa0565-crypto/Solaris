@@ -167,12 +167,12 @@ export default function HeroSection() {
         {/* Trust signals — desktop */}
         <div className="hidden md:flex items-center justify-center gap-6 mt-8 flex-wrap">
           {[
-            { symbol: '✦', label: 'Entrega 7–14 dias' },
-            { symbol: '↩', label: 'Devolução 30 dias' },
-            { symbol: '◈', label: 'Pagamento Seguro' },
-          ].map(({ symbol, label }) => (
-            <div key={label} className="flex items-center gap-2">
-              <span className="text-solar-yellow text-[10px]">{symbol}</span>
+            'Entrega 7–14 dias',
+            'Devolução 30 dias',
+            'Pagamento Seguro',
+          ].map((label, i) => (
+            <div key={label} className="flex items-center gap-3">
+              {i > 0 && <span className="text-white/15 text-[10px]">·</span>}
               <span className="font-mono text-[10px] tracking-[0.25em] uppercase text-white/50">{label}</span>
             </div>
           ))}
@@ -221,12 +221,11 @@ export default function HeroSection() {
           {/* Trust signals — linha compacta */}
           <div className="flex items-center justify-between">
             {[
-              ['✦', '7–14 dias'],
-              ['↩', '30 dias'],
-              ['◈', 'Seguro'],
-            ].map(([symbol, label]) => (
+              '7–14 dias',
+              '30 dias dev.',
+              'Pag. Seguro',
+            ].map((label) => (
               <div key={label} className="flex items-center gap-1.5">
-                <span className="text-solar-yellow text-[9px] leading-none">{symbol}</span>
                 <span className="font-mono text-[8.5px] tracking-[0.2em] uppercase text-absolute-black/45">
                   {label}
                 </span>
