@@ -12,12 +12,10 @@ const routes: Record<string, (req: VercelRequest, res: VercelResponse) => any> =
 };
 
 export default function handler(req: VercelRequest, res: VercelResponse) {
-  const pathVal = req.query.path;
-  const segments = Array.isArray(pathVal) ? pathVal : (pathVal ? [pathVal] : []);
-  // Tolerate Vercel including 'admin' as the first path segment
-  const offset = segments[0] === 'admin' ? 1 : 0;
-  const key = segments[offset] || '';
+  const pathVal = req.query['...path'] ?? req.query.path;
+  const segments = Array.isArray(pathVal) ? pathVal : (pathVal ? String(pathVal).split('/') : []);
+  const key = segments[0] || '';
   const route = routes[key];
-  if (!route) return res.status(404).json({ error: 'Not found', _debug: { key, segments, query: req.query } });
+  if (!route) return res.status(404).json({ error: 'Not found' });
   return route(req, res);
 }
