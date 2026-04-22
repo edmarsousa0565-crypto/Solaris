@@ -394,43 +394,51 @@ function HomePage({ HORIZONTAL_PRODUCTS, featuredProducts, featuredLoading, cate
               <HeroSection />
             </div>
 
-            {/* Section 03: Collection — só renderiza se houver produtos */}
-            {HORIZONTAL_PRODUCTS.length >= 1 && (
+            {/* Section 03: Collection — sempre presente para o GSAP calcular scrollWidth correctamente */}
             <section className="w-[150vw] h-full flex items-center relative border-r border-absolute-black/10 shrink-0 px-[10vw]">
               <div className="flex items-center gap-[10vw] w-full h-full">
-                {HORIZONTAL_PRODUCTS[0] && (
-                <ProductCard
-                  number="01"
-                  title={HORIZONTAL_PRODUCTS[0].name}
-                  price={HORIZONTAL_PRODUCTS[0].price}
-                  image={HORIZONTAL_PRODUCTS[0].image}
-                  className="w-[35vw] -translate-y-12"
-                  onAddToCart={(e) => handleAddToCart(e, HORIZONTAL_PRODUCTS[0])}
-                />
-                )}
-                {HORIZONTAL_PRODUCTS[1] && (
-                <ProductCard
-                  number="02"
-                  title={HORIZONTAL_PRODUCTS[1].name}
-                  price={HORIZONTAL_PRODUCTS[1].price}
-                  image={HORIZONTAL_PRODUCTS[1].image}
-                  className="w-[45vw] translate-y-24"
-                  onAddToCart={(e) => handleAddToCart(e, HORIZONTAL_PRODUCTS[1])}
-                />
-                )}
-                {HORIZONTAL_PRODUCTS[2] && (
-                <ProductCard
-                  number="03"
-                  title={HORIZONTAL_PRODUCTS[2].name}
-                  price={HORIZONTAL_PRODUCTS[2].price}
-                  image={HORIZONTAL_PRODUCTS[2].image}
-                  className="w-[25vw] -translate-y-4"
-                  onAddToCart={(e) => handleAddToCart(e, HORIZONTAL_PRODUCTS[2])}
-                />
+                {featuredLoading ? (
+                  <>
+                    <div className="w-[35vw] -translate-y-12 aspect-[3/4] bg-bleached-concrete/20 animate-pulse" />
+                    <div className="w-[45vw] translate-y-24 aspect-[3/4] bg-bleached-concrete/20 animate-pulse" />
+                    <div className="w-[25vw] -translate-y-4 aspect-[3/4] bg-bleached-concrete/20 animate-pulse" />
+                  </>
+                ) : (
+                  <>
+                    {HORIZONTAL_PRODUCTS[0] && (
+                    <ProductCard
+                      number="01"
+                      title={HORIZONTAL_PRODUCTS[0].name}
+                      price={HORIZONTAL_PRODUCTS[0].price}
+                      image={HORIZONTAL_PRODUCTS[0].image}
+                      className="w-[35vw] -translate-y-12"
+                      onAddToCart={(e) => handleAddToCart(e, HORIZONTAL_PRODUCTS[0])}
+                    />
+                    )}
+                    {HORIZONTAL_PRODUCTS[1] && (
+                    <ProductCard
+                      number="02"
+                      title={HORIZONTAL_PRODUCTS[1].name}
+                      price={HORIZONTAL_PRODUCTS[1].price}
+                      image={HORIZONTAL_PRODUCTS[1].image}
+                      className="w-[45vw] translate-y-24"
+                      onAddToCart={(e) => handleAddToCart(e, HORIZONTAL_PRODUCTS[1])}
+                    />
+                    )}
+                    {HORIZONTAL_PRODUCTS[2] && (
+                    <ProductCard
+                      number="03"
+                      title={HORIZONTAL_PRODUCTS[2].name}
+                      price={HORIZONTAL_PRODUCTS[2].price}
+                      image={HORIZONTAL_PRODUCTS[2].image}
+                      className="w-[25vw] -translate-y-4"
+                      onAddToCart={(e) => handleAddToCart(e, HORIZONTAL_PRODUCTS[2])}
+                    />
+                    )}
+                  </>
                 )}
               </div>
             </section>
-            )}
 
             {/* Section: Brand Manifesto */}
             <ManifestoSection />

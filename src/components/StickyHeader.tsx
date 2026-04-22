@@ -45,6 +45,11 @@ export default function StickyHeader({ activeFilter, onFilterChange, categories 
       gsap.set(headerRef.current, { yPercent: -100 });
       gsap.set(lineRef.current, { scaleX: 0 });
 
+      // Prevent spurious show when ScrollTrigger fires onEnter immediately
+      // because the page restores scroll position past the trigger on refresh
+      let ready = false;
+      requestAnimationFrame(() => { ready = true; });
+
       let lastDirection = 0;
 
       ScrollTrigger.create({
@@ -52,6 +57,7 @@ export default function StickyHeader({ activeFilter, onFilterChange, categories 
         start: 'top top',
         end: 'bottom top',
         onEnter: () => {
+          if (!ready) return;
           gsap.to(headerRef.current, { yPercent: 0, duration: 0.8, ease: 'expo.out' });
           gsap.to(lineRef.current, { scaleX: 1, duration: 1, ease: 'expo.out', delay: 0.4 });
         },
