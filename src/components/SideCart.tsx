@@ -27,6 +27,8 @@ export default function SideCart() {
       .catch(() => {});
   }, [isOpen, syncPrices]);
 
+  const FREE_SHIPPING_THRESHOLD = 50;
+
   const total = items.reduce((acc, item) => {
     const raw = String(item.price).replace(/[^0-9,.\-]/g, '');
     const normalized = raw.includes(',') && raw.includes('.')
@@ -139,7 +141,7 @@ export default function SideCart() {
             items.map((item, i) => (
               <div key={i} className="flex justify-between items-center gap-4 group">
                 <Link
-                  to={`/shop/product/${item.cjPid || item.id}`}
+                  to={`/shop/product/${item.cjPid || item.id}${item.supplier === 'matterhorn' ? '?s=mh' : item.supplier === 'eprolo' ? '?s=ep' : ''}`}
                   onClick={() => setIsOpen(false)}
                   className="flex-shrink-0"
                 >
@@ -166,7 +168,7 @@ export default function SideCart() {
                     </button>
                   </div>
                   <Link
-                    to={`/shop/product/${item.cjPid || item.id}`}
+                    to={`/shop/product/${item.cjPid || item.id}${item.supplier === 'matterhorn' ? '?s=mh' : item.supplier === 'eprolo' ? '?s=ep' : ''}`}
                     onClick={() => setIsOpen(false)}
                     className="uppercase tracking-wide group-hover:text-oxidized-gold transition-colors truncate hover:underline"
                   >
@@ -216,6 +218,14 @@ export default function SideCart() {
             <span>Subtotal</span>
             <span>€{total.toFixed(2)}</span>
           </div>
+          {items.length > 0 && (
+            <div className="flex justify-between items-center uppercase tracking-widest text-[13px] text-absolute-black/60">
+              <span>Portes</span>
+              <span className={total >= FREE_SHIPPING_THRESHOLD ? 'text-green-600 font-medium' : ''}>
+                {total >= FREE_SHIPPING_THRESHOLD ? 'Grátis' : 'a calcular'}
+              </span>
+            </div>
+          )}
 
           {error && (
             <p className="text-red-600 text-[13px] tracking-wider text-center">{error}</p>

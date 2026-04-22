@@ -291,7 +291,7 @@ function HomePage({ HORIZONTAL_PRODUCTS, featuredProducts, featuredLoading, cate
                   ))
                 : HORIZONTAL_PRODUCTS.map((product) => (
                 <div key={product.id} className="shrink-0 w-[65vw] flex flex-col gap-3" style={{ scrollSnapAlign: 'start' }}>
-                  <Link to={`/shop/product/${product.cjPid || product.id}`} className="block relative aspect-[3/4] overflow-hidden bg-bleached-concrete/20">
+                  <Link to={`/shop/product/${product.cjPid || product.id}${(product as any).supplier === 'matterhorn' ? '?s=mh' : (product as any).supplier === 'eprolo' ? '?s=ep' : ''}`} className="block relative aspect-[3/4] overflow-hidden bg-bleached-concrete/20">
                     <img
                       src={product.image}
                       alt={product.name}

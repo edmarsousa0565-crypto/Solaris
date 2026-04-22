@@ -65,7 +65,7 @@ export default function ShopPage() {
         <span className="font-mono text-[13px] tracking-[0.5em] uppercase text-absolute-black/90 hidden md:block">
           Coleção
         </span>
-        <button onClick={() => setIsOpen(true)} className="font-mono text-xs hover:text-oxidized-gold transition-colors">
+        <button id="cart-icon" onClick={() => setIsOpen(true)} className="font-mono text-xs hover:text-oxidized-gold transition-colors">
           [{String(cartItems.length).padStart(2, '0')}]
         </button>
       </header>
@@ -170,7 +170,7 @@ function ProductTile({ product, index, onAddToCart }: { product: CJProduct; inde
       transition={{ duration: 0.5, delay: index * 0.04, ease: [0.16, 1, 0.3, 1] }}
       className="group flex flex-col gap-4"
     >
-      <Link to={`/shop/product/${product.cjPid}`} className="block relative aspect-[3/4] overflow-hidden bg-bleached-concrete/20">
+      <Link to={`/shop/product/${product.cjPid}${product.supplier === 'matterhorn' ? '?s=mh' : product.supplier === 'eprolo' ? '?s=ep' : ''}`} className="block relative aspect-[3/4] overflow-hidden bg-bleached-concrete/20">
         <img
           src={product.image}
           alt={product.name}
@@ -200,7 +200,7 @@ function ProductTile({ product, index, onAddToCart }: { product: CJProduct; inde
           </SfButton>
         )}
       </Link>
-      <Link to={`/shop/product/${product.cjPid}`} className="flex flex-col gap-1 px-1 hover:opacity-70 transition-opacity">
+      <Link to={`/shop/product/${product.cjPid}${product.supplier === 'matterhorn' ? '?s=mh' : product.supplier === 'eprolo' ? '?s=ep' : ''}`} className="flex flex-col gap-1 px-1 hover:opacity-70 transition-opacity">
         <div className="flex justify-between items-baseline gap-2">
           <span className="font-mono text-xs tracking-widest uppercase text-absolute-black truncate">{product.name}</span>
           <span className="font-mono text-xs text-absolute-black/80 shrink-0">{product.price}</span>

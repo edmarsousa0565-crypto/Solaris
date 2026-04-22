@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -19,24 +19,34 @@ export default function ProductPage() {
   const { pid } = useParams<{ pid: string }>();
   const navigate = useNavigate();
 
-  // Resolve o fornecedor antes de fazer o fetch do produto
-  const [supplier, setSupplier] = useStateReact<'cj' | 'matterhorn'>('cj');
-  const [supplierResolved, setSupplierResolved] = useStateReact(false);
+  // ?s=mh → matterhorn | ?s=ep → eprolo | sem param → resolve via featured
+  const [searchParams] = useSearchParams();
+  const supplierParam = searchParams.get('s');
+  const initialSupplier = supplierParam === 'mh' ? 'matterhorn' : supplierParam === 'ep' ? 'eprolo' : 'cj';
+  const [supplier, setSupplier] = useStateReact<'cj' | 'matterhorn' | 'eprolo'>(initialSupplier);
+  const [supplierResolved, setSupplierResolved] = useStateReact(supplierParam !== null);
+  const [featuredMeta, setFeaturedMeta] = useStateReact<{ sizeChartType?: string; materialsInfo?: string } | null>(null);
 
   useEffectReact(() => {
     let cancelled = false;
     if (!pid) return;
-    // Procura o produto em featured para descobrir o supplier
     fetch('/api/admin/featured')
       .then(r => r.json())
       .then(data => {
         if (cancelled) return;
         const match = (data.products || []).find((p: any) => p.cjPid === pid || p.id === pid);
-        if (match?.supplier === 'matterhorn') setSupplier('matterhorn');
-        else setSupplier('cj');
-        setSupplierResolved(true);
+        if (match) {
+          if (!supplierParam) {
+            const s = match.supplier === 'matterhorn' ? 'matterhorn' : match.supplier === 'eprolo' ? 'eprolo' : 'cj';
+            setSupplier(s);
+            setSupplierResolved(true);
+          }
+          setFeaturedMeta({ sizeChartType: match.sizeChartType, materialsInfo: match.materialsInfo });
+        } else if (!supplierParam) {
+          setSupplierResolved(true);
+        }
       })
-      .catch(() => setSupplierResolved(true));
+      .catch(() => { if (!supplierParam) setSupplierResolved(true); });
     return () => { cancelled = true; };
   }, [pid]);
 
@@ -139,6 +149,7 @@ export default function ProductPage() {
           Solaris
         </Link>
         <button
+          id="cart-icon"
           onClick={() => setIsOpen(true)}
           aria-label={`Carrinho — ${cartItems.length} ${cartItems.length === 1 ? 'item' : 'itens'}`}
           className="font-mono text-xs hover:text-oxidized-gold transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
@@ -426,13 +437,11 @@ export default function ProductPage() {
                     <span className="font-mono text-[13px] tracking-widest text-absolute-black/80">{product.category}</span>
                     <span className="font-mono text-[13px] tracking-[0.3em] uppercase text-absolute-black/60">Coleção</span>
                     <span className="font-mono text-[13px] tracking-widest text-absolute-black/80">{product.collection}</span>
-                    <span className="font-mono text-[13px] tracking-[0.3em] uppercase text-absolute-black/60">Ref.</span>
-                    <span className="font-mono text-[13px] tracking-widest text-absolute-black/80 uppercase">{product.cjPid}</span>
                   </div>
                 </div>
 
                 {/* Guia de Tamanhos */}
-                <div className="flex flex-col gap-4 border-t border-absolute-black/10 pt-8">
+                {featuredMeta?.sizeChartType !== 'none' && <div className="flex flex-col gap-4 border-t border-absolute-black/10 pt-8">
                   <button
                     type="button"
                     className="flex justify-between items-center w-full text-left group min-h-[44px]"
@@ -477,7 +486,7 @@ export default function ProductPage() {
                       Em dúvida entre dois tamanhos? Recomendamos o maior.
                     </p>
                   </div>
-                </div>
+                </div>}
 
                 {/* Materiais e Cuidados */}
                 <div className="flex flex-col gap-4 border-t border-absolute-black/10 pt-8">
@@ -494,13 +503,19 @@ export default function ProductPage() {
                     <span className="font-mono text-[13px] text-absolute-black/70 transition-transform duration-300" style={{ display: 'inline-block', transform: openAcc.materials ? 'rotate(45deg)' : 'none' }}>+</span>
                   </button>
                   <div id="acc-materials" hidden={!openAcc.materials}>
-                    <ul className="flex flex-col gap-2 font-mono text-[13px] tracking-wide text-absolute-black/70 leading-relaxed">
-                      <li className="flex items-start gap-2"><span className="text-oxidized-gold shrink-0" aria-hidden="true">✧</span>100% Linho Natural / Viscose</li>
-                      <li className="flex items-start gap-2"><span className="text-oxidized-gold shrink-0" aria-hidden="true">✧</span>Lavagem à mão ou 30°C delicados</li>
-                      <li className="flex items-start gap-2"><span className="text-oxidized-gold shrink-0" aria-hidden="true">✧</span>Não torcer — estender à sombra</li>
-                      <li className="flex items-start gap-2"><span className="text-oxidized-gold shrink-0" aria-hidden="true">✧</span>Ferro a temperatura baixa</li>
-                      <li className="flex items-start gap-2"><span className="text-oxidized-gold shrink-0" aria-hidden="true">✧</span>Não usar máquina de secar</li>
-                    </ul>
+                    {featuredMeta?.materialsInfo ? (
+                      <p className="font-mono text-[13px] tracking-wide text-absolute-black/70 leading-relaxed whitespace-pre-line">
+                        {featuredMeta.materialsInfo}
+                      </p>
+                    ) : (
+                      <ul className="flex flex-col gap-2 font-mono text-[13px] tracking-wide text-absolute-black/70 leading-relaxed">
+                        <li className="flex items-start gap-2"><span className="text-oxidized-gold shrink-0" aria-hidden="true">✧</span>100% Linho Natural / Viscose</li>
+                        <li className="flex items-start gap-2"><span className="text-oxidized-gold shrink-0" aria-hidden="true">✧</span>Lavagem à mão ou 30°C delicados</li>
+                        <li className="flex items-start gap-2"><span className="text-oxidized-gold shrink-0" aria-hidden="true">✧</span>Não torcer — estender à sombra</li>
+                        <li className="flex items-start gap-2"><span className="text-oxidized-gold shrink-0" aria-hidden="true">✧</span>Ferro a temperatura baixa</li>
+                        <li className="flex items-start gap-2"><span className="text-oxidized-gold shrink-0" aria-hidden="true">✧</span>Não usar máquina de secar</li>
+                      </ul>
+                    )}
                   </div>
                 </div>
 

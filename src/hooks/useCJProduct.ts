@@ -32,6 +32,8 @@ export function useCJProduct(pid: string | undefined, supplier: 'cj' | 'matterho
 
     const url = supplier === 'matterhorn'
       ? `/api/matterhorn?action=product&id=${pid}`
+      : supplier === 'eprolo'
+      ? `/api/eprolo?action=product&id=${pid}`
       : `/api/cj?action=product&pid=${pid}`;
 
     fetch(url)
@@ -39,6 +41,7 @@ export function useCJProduct(pid: string | undefined, supplier: 'cj' | 'matterho
       .then(data => {
         if (data.error) throw new Error(data.error);
         const p = data.product;
+        if (!p) throw new Error('Produto não encontrado');
         // Normaliza para ambos os fornecedores
         const normalized: CJProductDetail = {
           ...p,
