@@ -68,9 +68,13 @@ export default function HeroSection() {
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <img
           ref={imageRef}
-          src="/hero-beach.jpg"
+          src="/hero-beach.webp"
+          srcSet="/hero-beach-800.webp 800w, /hero-beach-1200.webp 1200w, /hero-beach.webp 1920w"
+          sizes="100vw"
           alt=""
           aria-hidden="true"
+          fetchPriority="high"
+          decoding="async"
           className="w-full h-full object-cover object-center"
           style={{ opacity: 0 }}
         />

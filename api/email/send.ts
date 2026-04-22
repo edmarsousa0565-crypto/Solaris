@@ -19,6 +19,13 @@ import {
   type AdminOrderNotificationData,
 } from './_templates';
 
+interface ContactData {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
 // Se o domínio solaris.pt ainda não estiver verificado no Resend,
 // define RESEND_FROM_EMAIL=noreply@solaris.pt nas env vars do Vercel.
 // Durante testes pode usar-se o domínio do Resend: onboarding@resend.dev
@@ -35,8 +42,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   const { type, data } = req.body as {
-    type: 'order-confirmation' | 'shipping' | 'delivered' | 'admin-order-notification';
-    data: OrderConfirmationData | ShippingData | DeliveredData | AdminOrderNotificationData;
+    type: 'order-confirmation' | 'shipping' | 'delivered' | 'admin-order-notification' | 'contact';
+    data: OrderConfirmationData | ShippingData | DeliveredData | AdminOrderNotificationData | ContactData;
   };
 
   if (!type || !data) {
@@ -72,6 +79,26 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         const d = data as AdminOrderNotificationData;
         email = adminOrderNotificationTemplate(d);
         to = process.env.ADMIN_EMAIL || 'edmar@pakkaz.com';
+        break;
+      }
+      case 'contact': {
+        const d = data as ContactData;
+        if (!d.name || !d.email || !d.message) {
+          return res.status(400).json({ error: 'Campos obrigatórios: name, email, message' });
+        }
+        const adminEmail = process.env.ADMIN_EMAIL || 'edmar@pakkaz.com';
+        email = {
+          subject: `[Contacto SOLARIS] ${d.subject || 'Nova mensagem'} — ${d.name}`,
+          html: `<p><strong>Nome:</strong> ${d.name}</p><p><strong>Email:</strong> ${d.email}</p><p><strong>Assunto:</strong> ${d.subject || '—'}</p><hr/><p style="white-space:pre-wrap">${d.message}</p>`,
+        };
+        to = adminEmail;
+        // Envia confirmação ao remetente em paralelo
+        resend.emails.send({
+          from: FROM_EMAIL,
+          to: d.email,
+          subject: 'SOLARIS — Recebemos a tua mensagem',
+          html: `<p>Olá ${d.name},</p><p>Recebemos a tua mensagem e responderemos em 24 horas em dias úteis.</p><p>Obrigado,<br/>Equipa SOLARIS</p>`,
+        }).catch(() => {});
         break;
       }
       default:

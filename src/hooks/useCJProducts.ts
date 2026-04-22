@@ -17,6 +17,8 @@ export interface CJProduct {
   cjPid: string;
   selectedVids?: string[];
   sortOrder?: number;
+  supplier?: 'cj' | 'matterhorn' | 'eprolo';
+  matterhorn_id?: string;
 }
 
 interface UseCJProductsOptions {
@@ -47,7 +49,7 @@ export function useCJProducts(options: UseCJProductsOptions = {}) {
       ...(categoryId ? { categoryId } : {}),
     });
 
-    fetch(`/api/cj/products?${params}`)
+    fetch(`/api/cj?action=products&${params}`)
       .then(r => r.json())
       .then(data => {
         if (data.error) throw new Error(data.error);

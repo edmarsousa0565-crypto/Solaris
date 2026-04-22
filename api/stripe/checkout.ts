@@ -14,8 +14,14 @@ export interface CheckoutItem {
   price: number;   // em cêntimos (ex: 4999 = €49,99)
   quantity: number;
   image?: string;
+  // CJ
   cjPid?: string;
   variantId?: string;
+  // Matterhorn
+  matterhorn_id?: string;
+  variant_uid?: string;
+  // Fornecedor: 'cj' | 'matterhorn' | 'eprolo'
+  supplier?: string;
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -49,8 +55,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           name: item.name,
           // Stripe só aceita imagens HTTPS publicamente acessíveis — omite URLs CJ
           metadata: {
+            supplier: item.supplier || 'cj',
             cjPid: item.cjPid || '',
             variantId: item.variantId || '',
+            matterhorn_id: item.matterhorn_id || '',
+            variant_uid: item.variant_uid || '',
           },
         },
         unit_amount: item.price,

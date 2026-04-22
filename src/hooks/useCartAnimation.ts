@@ -1,5 +1,6 @@
 import gsap from 'gsap';
 import { trackAddToCart } from '../lib/pixel';
+import { gaAddToCart } from '../lib/analytics';
 import { useCartStore, CartItem } from '../store/cartStore';
 
 export function useCartAnimation() {
@@ -50,12 +51,14 @@ export function useCartAnimation() {
         // Dispara Zustand
         addItem(product);
 
-        // Pixel tracking
-        trackAddToCart({
+        // Pixel + GA4 tracking
+        const trackPayload = {
           id: product.id || product.cjPid || 'unknown',
           name: product.name,
           price: parseFloat((product.price || '0').toString().replace('€', '').replace(',', '.')),
-        });
+        };
+        trackAddToCart(trackPayload);
+        gaAddToCart({ ...trackPayload, quantity: product.quantity ?? 1 });
         
         // Pequeno "bump" no ícone do carrinho
         gsap.fromTo(cartIcon, 

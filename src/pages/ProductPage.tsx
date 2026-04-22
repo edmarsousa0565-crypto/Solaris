@@ -11,11 +11,36 @@ import { useCartStore } from '../store/cartStore';
 import { useWishlistStore } from '../store/wishlistStore';
 import { useCartAnimation } from '../hooks/useCartAnimation';
 import { Helmet } from 'react-helmet-async';
+import { useEffect as useEffectReact, useState as useStateReact } from 'react';
+import { trackViewContent } from '../lib/pixel';
+import { gaViewItem } from '../lib/analytics';
 
 export default function ProductPage() {
   const { pid } = useParams<{ pid: string }>();
   const navigate = useNavigate();
-  const { product, loading, error } = useCJProduct(pid);
+
+  // Resolve o fornecedor antes de fazer o fetch do produto
+  const [supplier, setSupplier] = useStateReact<'cj' | 'matterhorn'>('cj');
+  const [supplierResolved, setSupplierResolved] = useStateReact(false);
+
+  useEffectReact(() => {
+    let cancelled = false;
+    if (!pid) return;
+    // Procura o produto em featured para descobrir o supplier
+    fetch('/api/admin/featured')
+      .then(r => r.json())
+      .then(data => {
+        if (cancelled) return;
+        const match = (data.products || []).find((p: any) => p.cjPid === pid || p.id === pid);
+        if (match?.supplier === 'matterhorn') setSupplier('matterhorn');
+        else setSupplier('cj');
+        setSupplierResolved(true);
+      })
+      .catch(() => setSupplierResolved(true));
+    return () => { cancelled = true; };
+  }, [pid]);
+
+  const { product, loading, error } = useCJProduct(supplierResolved ? pid : undefined, supplier);
   const onAddToCart = useCartAnimation();
   const cartItems = useCartStore(state => state.items);
   const setIsOpen = useCartStore(state => state.setIsOpen);
@@ -37,15 +62,36 @@ export default function ProductPage() {
     tl.fromTo(infoRef.current, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.7, ease: 'power4.out' }, '-=0.5');
   }, { scope: heroRef, dependencies: [product] });
 
+  // ViewContent — Meta Pixel + GA4 quando o produto carrega
+  useEffectReact(() => {
+    if (!product) return;
+    const price = parseFloat(String(product.price).replace(/[^0-9.,]/g, '').replace(',', '.')) || 0;
+    trackViewContent({ id: product.id, name: product.name, price });
+    gaViewItem({ id: product.id, name: product.name, price });
+  }, [product?.id]);
+
   const images = product?.images?.length ? product.images : product ? [product.image] : [];
+
+  const [sizeError, setSizeError] = useStateReact(false);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     if (!product) return;
+    // Exige seleção de tamanho se existirem variantes
+    if (product.sizes.length > 1 && !selectedVariant) {
+      e.preventDefault();
+      setSizeError(true);
+      setTimeout(() => setSizeError(false), 2000);
+      return;
+    }
     const variant = product.variants.find(v => v.name === selectedVariant) || product.variants[0];
+    const isMh = product.supplier === 'matterhorn';
     onAddToCart(e, {
       ...product,
       size: variant?.name || selectedVariant || undefined,
-      variantId: variant?.vid || undefined,
+      variantId: !isMh ? (variant?.vid || undefined) : undefined,
+      variant_uid: isMh ? (variant?.variant_uid || variant?.vid || undefined) : undefined,
+      matterhorn_id: isMh ? (product.matterhorn_id || product.cjPid) : undefined,
+      supplier: product.supplier || 'cj',
       quantity,
     });
   };
@@ -61,7 +107,7 @@ export default function ProductPage() {
         <meta property="og:title" content={`${product.name} — SOLARIS`} />
         <meta property="og:description" content={`${product.name} — ${product.price}. Envio rápido para Portugal, Brasil e Europa.`} />
         <meta property="og:image" content={product.image} />
-        <meta property="og:url" content={`https://solaris-drab.vercel.app/shop/product/${product.cjPid}`} />
+        <meta property="og:url" content={`${typeof window !== 'undefined' ? window.location.origin : ''}/shop/product/${product.cjPid}`} />
         <script type="application/ld+json">{JSON.stringify({
           "@context": "https://schema.org/",
           "@type": "Product",
@@ -71,7 +117,7 @@ export default function ProductPage() {
           "brand": { "@type": "Brand", "name": "SOLARIS" },
           "offers": {
             "@type": "Offer",
-            "url": `https://solaris-drab.vercel.app/shop/product/${product.cjPid}`,
+            "url": `${typeof window !== 'undefined' ? window.location.origin : ''}/shop/product/${product.cjPid}`,
             "priceCurrency": "EUR",
             "price": priceNum,
             "availability": product.isSoldOut ? "https://schema.org/OutOfStock" : "https://schema.org/InStock",
@@ -299,6 +345,11 @@ export default function ProductPage() {
                   >
                     {product.isSoldOut ? 'Esgotado' : '+ Adicionar ao Carrinho'}
                   </SfButton>
+                  {sizeError && (
+                    <p className="font-mono text-[11px] tracking-widest uppercase text-red-600 text-center">
+                      Seleciona um tamanho primeiro
+                    </p>
+                  )}
                   <button
                     type="button"
                     className={`font-mono text-[13px] tracking-[0.3em] uppercase transition-colors py-2 min-h-[44px] ${inWishlist(product.cjPid) ? 'text-oxidized-gold' : 'text-absolute-black/55 hover:text-absolute-black'}`}

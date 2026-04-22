@@ -11,7 +11,11 @@ export interface CartItem {
   size?: string;
   color?: string;
   quantity: number;
-  variantId?: string; // vid CJ (ex: "1234567890") — necessário para criar encomenda CJ
+  variantId?: string; // vid CJ — necessário para criar encomenda CJ
+  // Multi-fornecedor
+  supplier?: 'cj' | 'matterhorn' | 'eprolo';
+  matterhorn_id?: string;
+  variant_uid?: string;
 }
 
 interface CartStore {

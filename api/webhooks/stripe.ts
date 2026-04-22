@@ -4,6 +4,7 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import { createCJOrder, createMatterhornOrder, createEproloOrder } from './_suppliers';
 
 // ─── Clientes ────────────────────────────────────────────────────────────────
 
@@ -18,112 +19,6 @@ function getSupabase() {
   const key  = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
   if (!url || !key) throw new Error('Supabase não configurado');
   return createClient(url, key, { db: { schema: 'api' } });
-}
-
-// ─── Criar encomenda na CJ ────────────────────────────────────────────────────
-
-// Para itens sem variantId (adicionados da ShopPage sem selecção de variante),
-// consulta a CJ para obter o primeiro vid disponível com stock
-async function resolveVid(token: string, cjBaseUrl: string, cjPid: string): Promise<string | null> {
-  try {
-    const res = await fetch(`${cjBaseUrl}/product/query?pid=${cjPid}`, {
-      headers: { 'CJ-Access-Token': token },
-    });
-    const data = await res.json();
-    if (!data.result || !data.data?.variants?.length) return null;
-    const variant = data.data.variants.find((v: any) => v.variantStock > 0) || data.data.variants[0];
-    return variant?.vid ? String(variant.vid) : null;
-  } catch {
-    return null;
-  }
-}
-
-async function createCJOrder(session: Stripe.Checkout.Session) {
-  const shipping = session.shipping_details;
-  const lineItems = session.line_items?.data || [];
-
-  if (!shipping?.address) return null;
-
-  const { getCJToken, CJ_BASE_URL } = await import('../cj/_auth');
-  const token = await getCJToken();
-
-  // Resolve vid para cada item — usa o metadata do Stripe se existir,
-  // senão consulta CJ pelo pid para obter o primeiro variant disponível
-  const products: { vid: string; quantity: number }[] = [];
-  const pidsInOrder: string[] = [];
-
-  for (const item of lineItems) {
-    const meta = (item as any).price?.product?.metadata || {};
-    const variantId: string = meta.variantId || '';
-    const cjPid: string = meta.cjPid || '';
-    const quantity = item.quantity || 1;
-
-    if (cjPid) pidsInOrder.push(cjPid);
-
-    if (variantId) {
-      products.push({ vid: variantId, quantity });
-    } else if (cjPid) {
-      const vid = await resolveVid(token, CJ_BASE_URL, cjPid);
-      if (vid) products.push({ vid, quantity });
-      else console.warn(`Não encontrou vid para pid ${cjPid} — item ignorado na encomenda CJ`);
-    } else {
-      console.warn(`Item sem cjPid nem variantId: ${(item as any).description}`);
-    }
-  }
-
-  if (!products.length) {
-    console.warn('createCJOrder: nenhum produto com vid válido — encomenda CJ não criada');
-    return null;
-  }
-
-  // Busca o método de envio configurado no admin para o(s) produto(s) da encomenda
-  let shippingNameCode: string | undefined;
-  if (pidsInOrder.length > 0) {
-    try {
-      const sb = getSupabase();
-      const { data: fpRows } = await sb
-        .from('featured_products')
-        .select('shipping_method')
-        .in('pid', pidsInOrder)
-        .not('shipping_method', 'is', null)
-        .limit(1);
-      if (fpRows?.[0]?.shipping_method) {
-        shippingNameCode = fpRows[0].shipping_method;
-        console.log(`Método de envio configurado: ${shippingNameCode}`);
-      }
-    } catch (e) {
-      console.warn('Não foi possível obter shipping_method:', e);
-    }
-  }
-
-  const payload: Record<string, any> = {
-    orderNumber: `SOL-${session.id.slice(-8).toUpperCase()}`,
-    shippingCountry: shipping.address.country,
-    shippingCustomerName: shipping.name,
-    shippingAddress: shipping.address.line1,
-    shippingCity: shipping.address.city,
-    shippingProvince: shipping.address.state || '',
-    shippingZip: shipping.address.postal_code,
-    shippingPhone: session.customer_details?.phone || '',
-    products,
-  };
-
-  if (shippingNameCode) {
-    payload.shippingNameCode = shippingNameCode;
-  }
-
-  const response = await fetch(`${CJ_BASE_URL}/shopping/order/createOrder`, {
-    method: 'POST',
-    headers: { 'CJ-Access-Token': token, 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
-
-  const data = await response.json();
-  if (!data.result) {
-    console.error('CJ createOrder falhou:', data.message, JSON.stringify(payload));
-    return null;
-  }
-  return data.data?.orderId || null;
 }
 
 // ─── Enviar email de confirmação ──────────────────────────────────────────────
@@ -174,7 +69,7 @@ async function sendConfirmationEmail(session: Stripe.Checkout.Session, orderNumb
     }),
   });
 
-  const result = await res.json().catch(() => ({}));
+  const result: any = await res.json().catch(() => ({}));
   if (!res.ok) {
     throw new Error(`Email API ${res.status}: ${result.error || 'erro desconhecido'}`);
   }
@@ -272,26 +167,64 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     const orderNumber = `SOL-${session.id.slice(-8).toUpperCase()}`;
 
     try {
-      // 1. Cria encomenda na CJ
-      const cjOrderId = await createCJOrder(fullSession).catch(e => {
-        console.error('CJ order error:', e);
-        return null;
+      // 1. Identifica que fornecedores são necessários (para saber o que falhou vs não aplicável)
+      const lineItems = fullSession.line_items?.data || [];
+      const needsCj = lineItems.some((i: any) => {
+        const m = i.price?.product?.metadata || {};
+        return !m.supplier || m.supplier === 'cj';
       });
+      const needsMatterhorn = lineItems.some((i: any) => (i.price?.product?.metadata?.supplier) === 'matterhorn');
+      const needsEprolo = lineItems.some((i: any) => (i.price?.product?.metadata?.supplier) === 'eprolo');
 
-      // 2. Guarda no Supabase
+      const supplierErrors: Record<string, string> = {};
+
+      // 2. Cria encomendas nos fornecedores em paralelo
+      const [cjOrderId, matterhornResult, eproloOrderId] = await Promise.all([
+        needsCj
+          ? createCJOrder(fullSession).catch(e => { const msg = e?.message || String(e); console.error('CJ order error:', msg); supplierErrors.cj = msg; return null; })
+          : Promise.resolve(null),
+        needsMatterhorn
+          ? createMatterhornOrder(fullSession).catch(e => { const msg = e?.message || String(e); console.error('Matterhorn order error:', msg); supplierErrors.matterhorn = msg; return null; })
+          : Promise.resolve(null),
+        needsEprolo
+          ? createEproloOrder(fullSession).catch(e => { const msg = e?.message || String(e); console.error('Eprolo order error:', msg); supplierErrors.eprolo = msg; return null; })
+          : Promise.resolve(null),
+      ]);
+
+      const matterhornOrderId = matterhornResult?.orderId || null;
+      const matterhornPaymentUrl = matterhornResult?.paymentUrl || null;
+
+      // Marca como erro se o fornecedor era necessário mas não devolveu orderId
+      if (needsCj && !cjOrderId && !supplierErrors.cj) supplierErrors.cj = 'createOrder retornou null (ver logs)';
+      if (needsMatterhorn && !matterhornOrderId && !supplierErrors.matterhorn) supplierErrors.matterhorn = 'createOrder retornou null (ver logs)';
+      if (needsEprolo && !eproloOrderId && !supplierErrors.eprolo) supplierErrors.eprolo = 'createOrder retornou null (ver logs)';
+
+      const hasErrors = Object.keys(supplierErrors).length > 0;
+      const allSucceeded = (!needsCj || cjOrderId) && (!needsMatterhorn || matterhornOrderId) && (!needsEprolo || eproloOrderId);
+
+      // 3. Guarda no Supabase
       const supabase = getSupabase();
       await supabase.from('orders').upsert({
         stripe_session_id: session.id,
         cj_order_id: cjOrderId,
+        eprolo_order_id: eproloOrderId,
+        matterhorn_order_id: matterhornOrderId,
+        matterhorn_payment_url: matterhornPaymentUrl,
         customer_email: session.customer_details?.email || session.customer_email || '',
         customer_name: session.customer_details?.name || '',
         shipping_address: session.shipping_details,
         items: fullSession.line_items?.data || [],
         total_amount: (session.amount_total || 0) / 100,
         currency: session.currency?.toUpperCase() || 'EUR',
-        status: cjOrderId ? 'processing' : 'payment_received',
+        status: allSucceeded ? 'processing' : hasErrors ? 'supplier_failed' : 'payment_received',
+        supplier_errors: supplierErrors,
         order_number: orderNumber,
       }, { onConflict: 'stripe_session_id' });
+
+      // Alerta admin em falhas de fornecedor (email separado)
+      if (hasErrors) {
+        console.error(`[ORDER ${orderNumber}] SUPPLIER FAILURES:`, supplierErrors);
+      }
 
       // 3. Envia email de confirmação ao cliente
       await sendConfirmationEmail(fullSession, orderNumber).catch(e => {
@@ -303,7 +236,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         console.error('Admin notification error:', e);
       });
 
-      console.log(`✓ Encomenda ${orderNumber} processada | CJ: ${cjOrderId}`);
+      console.log(`✓ Encomenda ${orderNumber} processada | CJ: ${cjOrderId} | Matterhorn: ${matterhornOrderId} | Eprolo: ${eproloOrderId}`);
     } catch (err: any) {
       console.error('Error processing order:', err);
       // Não devolvemos erro ao Stripe para evitar retry — o erro foi logado

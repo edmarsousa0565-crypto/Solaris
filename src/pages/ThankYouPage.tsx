@@ -6,6 +6,7 @@ import { motion } from 'motion/react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { trackPurchase } from '../lib/pixel';
+import { gaPurchase } from '../lib/analytics';
 
 export default function ThankYouPage() {
   const [params] = useSearchParams();
@@ -26,6 +27,7 @@ export default function ThankYouPage() {
     sessionStorage.removeItem('solaris-checkout-total');
 
     trackPurchase({ value, orderId: sessionId || undefined });
+    gaPurchase({ value, orderId: sessionId || undefined });
   }, [sessionId]);
 
   useGSAP(() => {

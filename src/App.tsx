@@ -37,7 +37,11 @@ const TrackingPage = lazy(() => import('./pages/TrackingPage'));
 const ThankYouPage = lazy(() => import('./pages/ThankYouPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 const ShippingPage = lazy(() => import('./pages/ShippingPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
+const FAQPage = lazy(() => import('./pages/FAQPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
 import { initPixel, trackPageView, trackAddToCart } from './lib/pixel';
+import { initGA, gaPageView } from './lib/analytics';
 import UrgencyBar from './components/UrgencyBar';
 import EmailPopup from './components/EmailPopup';
 import ReviewsSection from './components/ReviewsSection';
@@ -48,15 +52,16 @@ const WishlistDrawer = lazy(() => import('./components/WishlistDrawer'));
 // Regista o plugin ScrollTrigger do GSAP e useGSAP
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-// Inicializa o Meta Pixel uma vez
+// Inicializa o Meta Pixel e GA4 uma vez
 initPixel();
+initGA();
 
 import { useCartAnimation } from './hooks/useCartAnimation';
 import { useFeaturedProducts } from './hooks/useFeaturedProducts';
 
 export default function App() {
-  // PageView por rota
-  useEffect(() => { trackPageView(); }, []);
+  // PageView por rota (Meta Pixel + GA4)
+  useEffect(() => { trackPageView(); gaPageView(); }, []);
 
   // Produtos reais da CJ via Supabase
   const { products: featuredProducts, loading } = useFeaturedProducts();
@@ -97,6 +102,9 @@ export default function App() {
         <Route path="/obrigado" element={<ThankYouPage />} />
         <Route path="/shop/product/:pid" element={<ProductPage />} />
         <Route path="/envios" element={<ShippingPage />} />
+        <Route path="/sobre" element={<AboutPage />} />
+        <Route path="/faq" element={<FAQPage />} />
+        <Route path="/contacto" element={<ContactPage />} />
         <Route path="*" element={<NotFoundPage />} />
         <Route path="/" element={<HomePage
           HORIZONTAL_PRODUCTS={HORIZONTAL_PRODUCTS}
@@ -346,7 +354,7 @@ function HomePage({ HORIZONTAL_PRODUCTS, featuredProducts, featuredLoading, cate
           <section className="grid grid-cols-2 h-[70vw]">
             {[
               HORIZONTAL_PRODUCTS[0]?.image || '/hero-campaign.webp',
-              HORIZONTAL_PRODUCTS[1]?.image || '/hero-beach.jpg',
+              HORIZONTAL_PRODUCTS[1]?.image || '/hero-beach.webp',
             ].map((img, i) => (
               <Link key={i} to="/shop" className="relative overflow-hidden block">
                 <img src={img} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" loading="lazy" />

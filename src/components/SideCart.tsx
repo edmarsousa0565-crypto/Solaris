@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { SfDrawer, SfButton, SfIconAdd, SfIconRemove, SfIconClose } from '@storefront-ui/react';
 import { trackInitiateCheckout } from '../lib/pixel';
+import { gaBeginCheckout } from '../lib/analytics';
 import { useCartStore } from '../store/cartStore';
 
 export default function SideCart() {
@@ -27,7 +28,11 @@ export default function SideCart() {
   }, [isOpen, syncPrices]);
 
   const total = items.reduce((acc, item) => {
-    const numericPrice = parseFloat(String(item.price).replace('€', '').replace(',', '.'));
+    const raw = String(item.price).replace(/[^0-9,.\-]/g, '');
+    const normalized = raw.includes(',') && raw.includes('.')
+      ? raw.replace(/\./g, '').replace(',', '.')
+      : raw.replace(',', '.');
+    const numericPrice = parseFloat(normalized);
     const qty = item.quantity || 1;
     return acc + (isNaN(numericPrice) ? 0 : numericPrice * qty);
   }, 0);
@@ -38,17 +43,29 @@ export default function SideCart() {
     setError(null);
 
     try {
-      const checkoutItems = items.map(item => ({
-        name: `${item.name} (${item.size || 'Unique'})`,
-        // converte "€49.99" → 4999 cêntimos
-        price: Math.round(parseFloat(String(item.price).replace('€', '').replace(',', '.')) * 100),
-        quantity: item.quantity || 1,
-        image: item.image || undefined,
-        cjPid: item.cjPid || undefined,
-        variantId: item.variantId || undefined,
-      }));
+      const checkoutItems = items.map(item => {
+        // Parse robusto: remove símbolos e normaliza vírgula como decimal (formato EU)
+        const raw = String(item.price).replace(/[^0-9,.\-]/g, '');
+        // Se houver ',' e '.' juntos, assume '.' milhar e ',' decimal
+        const normalized = raw.includes(',') && raw.includes('.')
+          ? raw.replace(/\./g, '').replace(',', '.')
+          : raw.replace(',', '.');
+        const priceEur = parseFloat(normalized) || 0;
+        return {
+          name: `${item.name} (${item.size || 'Unique'})`,
+          price: Math.round(priceEur * 100),
+          quantity: item.quantity || 1,
+          image: item.image || undefined,
+          supplier: item.supplier || 'cj',
+          cjPid: item.cjPid || undefined,
+          variantId: item.variantId || undefined,
+          matterhorn_id: item.matterhorn_id || undefined,
+          variant_uid: item.variant_uid || undefined,
+        };
+      });
 
       trackInitiateCheckout({ value: total, numItems: items.length });
+      gaBeginCheckout({ value: total, numItems: items.length });
 
       // Guarda o total para o evento Purchase na página /obrigado
       sessionStorage.setItem('solaris-checkout-total', String(total));
@@ -181,9 +198,12 @@ export default function SideCart() {
                 </div>
                 <div className="text-right flex flex-col items-end">
                    <span className="tracking-widest flex-shrink-0">{item.price}</span>
-                   {item.quantity && item.quantity > 1 && (
-                     <span className="text-[14px] text-absolute-black/40">Total: €{(parseFloat(String(item.price).replace('€', '').replace(',', '.')) * item.quantity).toFixed(2)}</span>
-                   )}
+                   {item.quantity && item.quantity > 1 && (() => {
+                     const r = String(item.price).replace(/[^0-9,.\-]/g, '');
+                     const n = r.includes(',') && r.includes('.') ? r.replace(/\./g, '').replace(',', '.') : r.replace(',', '.');
+                     const p = parseFloat(n) || 0;
+                     return <span className="text-[14px] text-absolute-black/40">Total: €{(p * item.quantity).toFixed(2)}</span>;
+                   })()}
                 </div>
               </div>
             ))

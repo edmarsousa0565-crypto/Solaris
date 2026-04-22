@@ -20,7 +20,7 @@ export async function getCJToken(): Promise<string> {
     }),
   });
 
-  const data = await res.json();
+  const data: any = await res.json();
 
   if (!data.result) {
     throw new Error(`CJ Auth failed: ${data.message}`);

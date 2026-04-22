@@ -2,6 +2,7 @@
 // POST /api/admin/featured   → { pid, action: 'add'|'remove', vids?, metadata? }
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
+import { requireAuth } from './_auth';
 
 function getSupabase() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -59,6 +60,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           shippingMethod: r.shipping_method || '',
           variantNames: r.variant_names || {},
           excludedImages: r.excluded_images ?? [],
+          supplier: r.supplier || 'cj',
+          matterhorn_id: r.supplier === 'matterhorn' ? r.pid : undefined,
         }));
 
       res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
@@ -70,6 +73,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   // ─── POST ───────────────────────────────────────────────────────────────────
   if (req.method === 'POST') {
+    if (!requireAuth(req, res)) return;
     const { pid, action, vids, metadata } = req.body as any;
     if (!pid || !action) return res.status(400).json({ error: 'Missing pid or action' });
 
@@ -93,6 +97,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (metadata?.isNew !== undefined)          payload.is_new             = metadata.isNew;
         if (metadata?.isSoldOut !== undefined)      payload.is_sold_out        = metadata.isSoldOut;
         if (metadata?.sortOrder !== undefined)      payload.sort_order         = metadata.sortOrder;
+        if (metadata?.supplier !== undefined)       payload.supplier           = metadata.supplier || 'cj';
 
         let { error } = await supabase
           .from('featured_products')

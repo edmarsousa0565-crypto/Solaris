@@ -145,6 +145,15 @@ export default function FinalFooter() {
 
       {/* Legal Links */}
       <div className="flex flex-wrap justify-center gap-6 mb-8 border-t border-[#F7F7F5]/10 pt-8">
+        <Link to="/sobre" className="font-mono text-xs uppercase tracking-widest text-[#F7F7F5]/60 hover:text-solar-yellow transition-colors">
+          Sobre
+        </Link>
+        <Link to="/faq" className="font-mono text-xs uppercase tracking-widest text-[#F7F7F5]/60 hover:text-solar-yellow transition-colors">
+          FAQ
+        </Link>
+        <Link to="/contacto" className="font-mono text-xs uppercase tracking-widest text-[#F7F7F5]/60 hover:text-solar-yellow transition-colors">
+          Contacto
+        </Link>
         <Link to="/envios" className="font-mono text-xs uppercase tracking-widest text-[#F7F7F5]/60 hover:text-solar-yellow transition-colors">
           Envios
         </Link>

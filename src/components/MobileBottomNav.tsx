@@ -12,8 +12,10 @@ export default function MobileBottomNav() {
   const wishCount = wishItems.length;
   const isHome = location.pathname === '/';
   const isShop = location.pathname.startsWith('/shop');
-
   const isTracking = location.pathname === '/tracking';
+  const isAdmin = location.pathname.startsWith('/admin');
+
+  if (isAdmin) return null;
 
   return (
     <nav

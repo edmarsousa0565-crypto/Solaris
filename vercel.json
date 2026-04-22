@@ -6,9 +6,6 @@
   "functions": {
     "api/webhooks/*.ts": {
       "maxDuration": 30
-    },
-    "api/admin/seed-winners.ts": {
-      "maxDuration": 60
     }
   },
   "rewrites": [
