@@ -132,7 +132,7 @@ export default function AdminPage() {
     if (!window.confirm(`Confirmar reembolso de ${amount !== undefined ? `€${amount.toFixed(2)}` : 'valor total'} para ${stripeSessionId}?`)) return;
     setRefundingOrder(stripeSessionId);
     try {
-      const res = await handleAuthResponse(await authFetch('/api/admin/refund', {
+      const res = await handleAuthResponse(await authFetch('/api/admin/orders?action=refund', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ stripeSessionId, amount }),

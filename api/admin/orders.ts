@@ -1,7 +1,9 @@
 // GET  /api/admin/orders — lista de encomendas do Supabase
 // GET  /api/admin/orders?format=csv — exporta CSV para contabilidade
-// POST /api/admin/orders?action=retry — retomar encomenda que falhou num fornecedor
+// POST /api/admin/orders?action=retry  — retomar encomenda que falhou num fornecedor
 //      body: { stripeSessionId, supplier: 'cj'|'matterhorn'|'eprolo' }
+// POST /api/admin/orders?action=refund — emitir reembolso total ou parcial
+//      body: { stripeSessionId, amount?, reason? }
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from './_auth';
@@ -35,6 +37,47 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store');
 
   if (!requireAuth(req, res)) return;
+
+  // ─── POST ?action=refund — emitir reembolso Stripe ────────────────────────
+  if (req.method === 'POST' && req.query.action === 'refund') {
+    try {
+      const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body || {};
+      const { stripeSessionId, amount, reason } = body as { stripeSessionId?: string; amount?: number; reason?: string };
+      if (!stripeSessionId) return res.status(400).json({ error: 'stripeSessionId é obrigatório' });
+
+      const stripeKey = process.env.STRIPE_SECRET_KEY;
+      if (!stripeKey) return res.status(503).json({ error: 'STRIPE_SECRET_KEY não configurado' });
+      const stripe = new Stripe(stripeKey, { apiVersion: '2023-10-16' });
+
+      const session = await stripe.checkout.sessions.retrieve(stripeSessionId);
+      if (!session.payment_intent) return res.status(400).json({ error: 'Session sem payment_intent' });
+      const paymentIntentId = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent.id;
+
+      const VALID_REASONS = ['duplicate', 'fraudulent', 'requested_by_customer'] as const;
+      const refundReason = VALID_REASONS.includes(reason as any) ? (reason as any) : 'requested_by_customer';
+
+      const refundParams: Stripe.RefundCreateParams = { payment_intent: paymentIntentId, reason: refundReason };
+      if (typeof amount === 'number' && amount > 0) refundParams.amount = Math.round(amount * 100);
+
+      const refund = await stripe.refunds.create(refundParams);
+      const refundedAmount = refund.amount / 100;
+      const isFullRefund = !amount || refundedAmount >= (session.amount_total || 0) / 100;
+
+      const sb = getSupabase();
+      await sb.from('orders').update({
+        status: isFullRefund ? 'refunded' : 'partially_refunded',
+        refund_id: refund.id,
+        refunded_amount: refundedAmount,
+        refunded_at: new Date().toISOString(),
+      }).eq('stripe_session_id', stripeSessionId);
+
+      console.log(`[REFUND] ${refund.id} — ${refundedAmount}€ — session ${stripeSessionId}`);
+      return res.status(200).json({ ok: true, refundId: refund.id, refundedAmount, status: refund.status, isFullRefund });
+    } catch (err: any) {
+      console.error('Refund error:', err);
+      return res.status(500).json({ error: err.message });
+    }
+  }
 
   // ─── POST ?action=retry — re-executar criação no fornecedor que falhou ────
   if (req.method === 'POST' && req.query.action === 'retry') {
