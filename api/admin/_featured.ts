@@ -3,6 +3,24 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from './_auth';
+import crypto from 'crypto';
+
+// Importa automaticamente um produto Eprolo na conta (necessário para getproduct.html funcionar)
+async function eproloAutoImport(pid: string): Promise<void> {
+  const apiKey = process.env.EPROLO_API_KEY || '';
+  const apiSecret = process.env.EPROLO_API_SECRET || '';
+  if (!apiKey || !apiSecret) return;
+  const timestamp = Date.now().toString();
+  const sign = crypto.createHash('md5').update(`${apiKey}${timestamp}${apiSecret}`).digest('hex').toUpperCase();
+  await fetch(
+    `https://openapi.eprolo.com/add_product.html?sign=${sign}&timestamp=${timestamp}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', apiKey },
+      body: JSON.stringify({ ids: [pid] }),
+    }
+  ).catch(() => { /* não bloqueia — import em best-effort */ });
+}
 
 function getSupabase() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -62,6 +80,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           excludedImages: r.excluded_images ?? [],
           supplier: r.supplier || 'cj',
           matterhorn_id: r.supplier === 'matterhorn' ? r.pid : undefined,
+          sizeChartType: r.size_chart_type || 'clothing',
+          materialsInfo: r.materials_info || '',
         }));
 
       res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
@@ -98,14 +118,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (metadata?.isSoldOut !== undefined)      payload.is_sold_out        = metadata.isSoldOut;
         if (metadata?.sortOrder !== undefined)      payload.sort_order         = metadata.sortOrder;
         if (metadata?.supplier !== undefined)       payload.supplier           = metadata.supplier || 'cj';
+        if (metadata?.sizeChartType !== undefined)  payload.size_chart_type    = metadata.sizeChartType || null;
+        if (metadata?.materialsInfo !== undefined)  payload.materials_info     = metadata.materialsInfo || null;
 
         let { error } = await supabase
           .from('featured_products')
           .upsert(payload, { onConflict: 'pid' });
 
-        // Se a coluna excluded_images ainda não existe no schema, tenta sem ela
-        if (error?.message?.includes('excluded_images')) {
-          const { excluded_images: _drop, ...payloadWithout } = payload;
+        // Se colunas ainda não existem no schema, tenta sem elas
+        if (error?.message?.includes('excluded_images') || error?.message?.includes('size_chart_type') || error?.message?.includes('materials_info')) {
+          const { excluded_images: _d1, size_chart_type: _d2, materials_info: _d3, ...payloadWithout } = payload;
           const retry = await supabase
             .from('featured_products')
             .upsert(payloadWithout, { onConflict: 'pid' });
@@ -113,6 +135,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         }
 
         if (error) throw new Error(error.message);
+
+        // Auto-importa na conta Eprolo para que getproduct.html funcione
+        if ((metadata?.supplier || payload.supplier) === 'eprolo') {
+          await eproloAutoImport(pid);
+        }
 
       } else if (action === 'remove') {
         const { error } = await supabase
