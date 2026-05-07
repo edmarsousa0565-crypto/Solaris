@@ -19,6 +19,10 @@ import {
   type AdminOrderNotificationData,
 } from './_templates';
 
+// Tipos chamados internamente (webhook → api/email/send) exigem secret.
+// O tipo 'contact' é chamado do frontend e fica público.
+const INTERNAL_TYPES = new Set(['order-confirmation', 'shipping', 'delivered', 'admin-order-notification']);
+
 interface ContactData {
   name: string;
   email: string;
@@ -48,6 +52,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   if (!type || !data) {
     return res.status(400).json({ error: 'Faltam campos: type e data' });
+  }
+
+  // Verifica secret interno para tipos transacionais
+  if (INTERNAL_TYPES.has(type)) {
+    const secret = process.env.INTERNAL_API_SECRET;
+    const provided = req.headers['x-internal-secret'];
+    if (!secret || !provided || provided !== secret) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
   }
 
   try {

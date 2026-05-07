@@ -2,15 +2,8 @@
 // POST /api/admin/settings — guarda configurações (protegido)
 // POST /api/admin/settings?action=login — login admin, devolve token (público)
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
 import { requireAuth, signToken, getAdminPassword } from './_auth';
-
-function getSupabase() {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error('SUPABASE_NOT_CONFIGURED');
-  return createClient(url, key, { db: { schema: 'api' } });
-}
+import { getSupabaseAdmin as getSupabase } from '../_supabase';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Cache-Control', 'no-store');

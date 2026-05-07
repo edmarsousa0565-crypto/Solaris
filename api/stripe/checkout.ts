@@ -25,6 +25,23 @@ export interface CheckoutItem {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  // GET /api/stripe/checkout?session_id=xxx — devolve o valor real da sessão (para o Purchase event)
+  if (req.method === 'GET') {
+    const sessionId = String(req.query.session_id || '');
+    if (!sessionId) return res.status(400).json({ error: 'Missing session_id' });
+    try {
+      const stripe = getStripe();
+      const session = await stripe.checkout.sessions.retrieve(sessionId, { expand: [] });
+      return res.status(200).json({
+        amount_total: session.amount_total,
+        currency: session.currency,
+        payment_status: session.payment_status,
+      });
+    } catch (e: any) {
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }

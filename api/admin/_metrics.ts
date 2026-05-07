@@ -1,15 +1,8 @@
 // GET /api/admin/metrics?range=7d|30d|90d|all
 // Dashboard de métricas: receita, pedidos, AOV, produtos top, por fornecedor
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from './_auth';
-
-function getSupabase() {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error('SUPABASE_NOT_CONFIGURED');
-  return createClient(url, key, { db: { schema: 'api' } });
-}
+import { getSupabaseAdmin as getSupabase } from '../_supabase';
 
 function rangeToDate(range: string): Date | null {
   const now = new Date();

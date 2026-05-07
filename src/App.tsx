@@ -6,7 +6,7 @@
 'use client';
 
 import { useRef, useState, useEffect, Suspense, lazy } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import { HelmetProvider } from 'react-helmet-async';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
@@ -52,16 +52,34 @@ const WishlistDrawer = lazy(() => import('./components/WishlistDrawer'));
 // Regista o plugin ScrollTrigger do GSAP e useGSAP
 gsap.registerPlugin(ScrollTrigger, useGSAP);
 
-// Inicializa o Meta Pixel e GA4 uma vez
-initPixel();
-initGA();
+// NÃO inicializar aqui — só após consentimento de cookies (RGPD)
 
 import { useCartAnimation } from './hooks/useCartAnimation';
 import { useFeaturedProducts } from './hooks/useFeaturedProducts';
 
 export default function App() {
-  // PageView por rota (Meta Pixel + GA4)
-  useEffect(() => { trackPageView(); gaPageView(); }, []);
+  const location = useLocation();
+
+  // Inicializa analytics apenas após consentimento RGPD
+  useEffect(() => {
+    const consent = localStorage.getItem('solaris-cookie-consent');
+    if (consent === 'accepted') {
+      initPixel();
+      initGA();
+    }
+    // Ouve aceitação em tempo real (caso o banner seja aceite agora)
+    const handler = () => { initPixel(); initGA(); trackPageView(); gaPageView(); };
+    window.addEventListener('solaris-cookie-accepted', handler);
+    return () => window.removeEventListener('solaris-cookie-accepted', handler);
+  }, []);
+
+  // PageView re-dispara em cada mudança de rota (SPA fix)
+  useEffect(() => {
+    const consent = localStorage.getItem('solaris-cookie-consent');
+    if (consent !== 'accepted') return;
+    trackPageView();
+    gaPageView();
+  }, [location.pathname]);
 
   // Produtos reais da CJ via Supabase
   const { products: featuredProducts, loading } = useFeaturedProducts();

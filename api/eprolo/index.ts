@@ -135,31 +135,79 @@ function extractMethods(source: any): any[] {
 }
 
 async function handleProduct(req: VercelRequest, res: VercelResponse) {
-  const { id, variantId } = req.query;
+  const { id, variantId, countrycode = 'PT' } = req.query;
   if (!id) return res.status(400).json({ error: 'Missing id' });
 
-  // getproduct.html só funciona para produtos importados. Para catálogo público,
-  // devolvemos apenas os métodos de envio via get_product_shiping_fees.html.
-  const productRes = await fetch(
-    `${EPROLO_BASE_URL}/getproduct.html?${getEproloAuthQS()}&id=${id}&product_id=${id}`,
-    { headers: getEproloAuthHeaders() }
-  );
-  const data: any = await productRes.json();
-  const raw = Array.isArray(data.data) ? data.data[0] : data.data;
+  // Tenta obter produto já importado
+  let raw: any = null;
+  try {
+    const productRes = await fetch(
+      `${EPROLO_BASE_URL}/getproduct.html?${getEproloAuthQS()}&id=${id}&product_id=${id}`,
+      { headers: getEproloAuthHeaders() }
+    );
+    const data: any = await productRes.json();
+    raw = Array.isArray(data.data) ? data.data[0] : data.data;
+  } catch { /* ignora */ }
+
+  // Se o produto ainda não foi importado, importa automaticamente
+  if (!raw) {
+    try {
+      console.log(`[eprolo/product] id=${id} não encontrado — a importar...`);
+      const importRes = await fetch(
+        `${EPROLO_BASE_URL}/add_product.html?${getEproloAuthQS()}`,
+        {
+          method: 'POST',
+          headers: { ...getEproloAuthHeaders(), 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: [String(id)] }),
+        }
+      );
+      const importData: any = await importRes.json();
+      console.log(`[eprolo/product] import result: code=${importData.code} msg=${importData.msg}`);
+
+      // Após importar, tenta buscar de novo
+      if (importData.code === '0' || importData.code === 0) {
+        const retryRes = await fetch(
+          `${EPROLO_BASE_URL}/getproduct.html?${getEproloAuthQS()}&id=${id}&product_id=${id}`,
+          { headers: getEproloAuthHeaders() }
+        );
+        const retryData: any = await retryRes.json();
+        raw = Array.isArray(retryData.data) ? retryData.data[0] : retryData.data;
+        console.log(`[eprolo/product] retry getproduct: found=${!!raw}`);
+        // Se ainda não veio do getproduct, usa os dados do import directamente
+        if (!raw) {
+          const importList: any[] = Array.isArray(importData.data) ? importData.data : [];
+          raw = importList[0] || null;
+          console.log(`[eprolo/product] fallback import data: found=${!!raw}`);
+        }
+      } else {
+        console.error(`[eprolo/product] import falhou: ${importData.msg}`);
+      }
+    } catch (e: any) {
+      console.error(`[eprolo/product] import error: ${e.message}`);
+    }
+  }
+
   const product = raw ? mapProduct(raw) : null;
 
-  let shippingMethods: any[] = product ? extractMethods(raw) : [];
+  // Sem produto — nunca cachear (para que a próxima tentativa seja fresh)
+  if (!product) {
+    res.setHeader('Cache-Control', 'no-store');
+    return res.status(200).json({ product: null, shippingMethods: [] });
+  }
 
-  // Se precisamos de shipping e temos variantId, chama o endpoint dedicado
-  if (shippingMethods.length === 0 && variantId) {
+  let shippingMethods: any[] = extractMethods(raw);
+
+  // Busca métodos de envio específicos para o país
+  if (variantId) {
     try {
       const sRes = await fetch(
-        `${EPROLO_BASE_URL}/get_product_shiping_fees.html?${getEproloAuthQS()}&productid=${id}&variantId=${variantId}&countrycode=PT`,
+        `${EPROLO_BASE_URL}/get_product_shiping_fees.html?${getEproloAuthQS()}&productid=${id}&variantId=${variantId}&countrycode=${countrycode}`,
         { headers: getEproloAuthHeaders() }
       );
       const sData: any = await sRes.json();
       if (sData.code === '0' || sData.code === 0) {
-        shippingMethods = extractMethods(sData);
+        const countryMethods = extractMethods(sData);
+        if (countryMethods.length > 0) shippingMethods = countryMethods;
       }
     } catch { /* ignora */ }
   }

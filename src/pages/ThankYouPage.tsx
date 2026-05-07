@@ -16,18 +16,34 @@ export default function ThankYouPage() {
   const circleRef = useRef<SVGCircleElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  // Dispara o evento Purchase apenas uma vez
+  // Dispara o evento Purchase apenas uma vez — valor lido da Stripe para evitar value:0
   useEffect(() => {
-    if (firedRef.current) return;
+    if (firedRef.current || !sessionId) return;
     firedRef.current = true;
 
-    // Lê valor do sessionStorage se foi guardado antes do checkout
-    const stored = sessionStorage.getItem('solaris-checkout-total');
-    const value = stored ? parseFloat(stored) : 0;
-    sessionStorage.removeItem('solaris-checkout-total');
+    const consent = localStorage.getItem('solaris-cookie-consent');
+    if (consent !== 'accepted') return;
 
-    trackPurchase({ value, orderId: sessionId || undefined });
-    gaPurchase({ value, orderId: sessionId || undefined });
+    // Tenta obter o valor real da sessão Stripe; fallback para sessionStorage
+    fetch(`/api/stripe/checkout?session_id=${encodeURIComponent(sessionId)}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        const value = data?.amount_total ? data.amount_total / 100 : (() => {
+          const stored = sessionStorage.getItem('solaris-checkout-total');
+          return stored ? parseFloat(stored) : 0;
+        })();
+        sessionStorage.removeItem('solaris-checkout-total');
+        trackPurchase({ value, currency: data?.currency?.toUpperCase() || 'EUR', orderId: sessionId });
+        gaPurchase({ value, orderId: sessionId });
+      })
+      .catch(() => {
+        // Fallback silencioso
+        const stored = sessionStorage.getItem('solaris-checkout-total');
+        const value = stored ? parseFloat(stored) : 0;
+        sessionStorage.removeItem('solaris-checkout-total');
+        trackPurchase({ value, orderId: sessionId });
+        gaPurchase({ value, orderId: sessionId });
+      });
   }, [sessionId]);
 
   useGSAP(() => {

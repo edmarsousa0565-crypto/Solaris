@@ -26,6 +26,10 @@ interface Props {
   setCustomShipping: (s: string) => void;
   customVariantNames: Record<string, string>;
   setCustomVariantNames: React.Dispatch<React.SetStateAction<Record<string, string>>>;
+  customSizeChart: string;
+  setCustomSizeChart: (s: string) => void;
+  customMaterials: string;
+  setCustomMaterials: (s: string) => void;
   editingVid: string | null;
   setEditingVid: (vid: string | null) => void;
   uploading: boolean;
@@ -54,6 +58,7 @@ export default function AdminProductModal({
   selectedVids, setSelectedVids, customName, setCustomName, customDesc, setCustomDesc,
   customImage, setCustomImage, customPrice, setCustomPrice, customCollection, setCustomCollection,
   customShipping, setCustomShipping, customVariantNames, setCustomVariantNames,
+  customSizeChart, setCustomSizeChart, customMaterials, setCustomMaterials,
   editingVid, setEditingVid, uploading, previewImage, setPreviewImage, previewColor, setPreviewColor,
   excludedImages, setExcludedImages, customExtraImages,
   globalSettings, mhShippingMethods, featuredPids, featuredProducts,
@@ -623,6 +628,43 @@ export default function AdminProductModal({
                     placeholder="Descrição para a loja — selling points, luxo, lifestyle..."
                     className="bg-transparent border border-absolute-black/10 p-3 font-mono text-[12px] leading-relaxed focus:border-absolute-black outline-none resize-none transition-colors placeholder:text-absolute-black/20"
                   />
+                </div>
+
+                {/* Materiais */}
+                <div className="flex flex-col gap-2 pt-4 border-t border-absolute-black/8">
+                  <label className="font-mono text-[11px] tracking-[0.4em] uppercase text-absolute-black/35">Materiais &amp; Cuidados</label>
+                  <textarea
+                    rows={4}
+                    value={customMaterials}
+                    onChange={e => setCustomMaterials(e.target.value)}
+                    placeholder="Ex: 100% Algodão. Lavar à mão a 30°C. Não usar secadora."
+                    className="bg-transparent border border-absolute-black/10 p-3 font-mono text-[12px] leading-relaxed focus:border-absolute-black outline-none resize-none transition-colors placeholder:text-absolute-black/20"
+                  />
+                  <p className="font-mono text-[10px] text-absolute-black/25 tracking-widest">Vazio = mostra texto padrão</p>
+                </div>
+
+                {/* Guia de Tamanhos */}
+                <div className="flex flex-col gap-2 pt-4 border-t border-absolute-black/8">
+                  <label className="font-mono text-[11px] tracking-[0.4em] uppercase text-absolute-black/35">Guia de Tamanhos</label>
+                  <div className="flex gap-2">
+                    {[
+                      { value: 'clothing', label: 'Vestuário' },
+                      { value: 'none', label: 'Ocultar' },
+                    ].map(opt => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setCustomSizeChart(opt.value)}
+                        className={`font-mono text-[11px] uppercase tracking-widest px-3 py-1.5 border transition-colors ${
+                          customSizeChart === opt.value
+                            ? 'bg-absolute-black text-stark-white border-absolute-black'
+                            : 'border-absolute-black/15 text-absolute-black/45 hover:border-absolute-black/50 hover:text-absolute-black'
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 <div className="h-2" />

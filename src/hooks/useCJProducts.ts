@@ -19,6 +19,8 @@ export interface CJProduct {
   sortOrder?: number;
   supplier?: 'cj' | 'matterhorn' | 'eprolo';
   matterhorn_id?: string;
+  sizeChartType?: string;
+  materialsInfo?: string;
 }
 
 interface UseCJProductsOptions {

@@ -1,8 +1,8 @@
 // GET  /api/admin/featured   → lista de produtos em destaque
 // POST /api/admin/featured   → { pid, action: 'add'|'remove', vids?, metadata? }
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from './_auth';
+import { getSupabasePublic, getSupabaseAdmin } from '../_supabase';
 import crypto from 'crypto';
 
 // Importa automaticamente um produto Eprolo na conta (necessário para getproduct.html funcionar)
@@ -22,24 +22,12 @@ async function eproloAutoImport(pid: string): Promise<void> {
   ).catch(() => { /* não bloqueia — import em best-effort */ });
 }
 
-function getSupabase() {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error('SUPABASE_NOT_CONFIGURED');
-  return createClient(url, key, { db: { schema: 'api' } });
-}
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  res.setHeader('Cache-Control', 'no-store');
+  // Cache: GET público recebe s-maxage após sucesso; escrita/erro nunca cacheado
+  res.setHeader('Cache-Control', req.method === 'GET' ? 'public, s-maxage=60, stale-while-revalidate=300' : 'no-store');
 
-  if (
-    !(process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL) ||
-    !(process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY)
-  ) {
-    return res.status(503).json({ error: 'SUPABASE_NOT_CONFIGURED', products: [], pids: [] });
-  }
-
-  const supabase = getSupabase();
+  // GET usa anon key (leitura pública com RLS), POST usa service key (escrita admin)
+  const supabase = req.method === 'GET' ? getSupabasePublic() : getSupabaseAdmin();
 
   // ─── GET ────────────────────────────────────────────────────────────────────
   if (req.method === 'GET') {
@@ -84,7 +72,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           materialsInfo: r.materials_info || '',
         }));
 
-      res.setHeader('Cache-Control', 's-maxage=60, stale-while-revalidate=300');
       return res.status(200).json({ products: resolvedProducts, pids });
     } catch (err: any) {
       return res.status(500).json({ error: err.message, products: [], pids: [] });
@@ -150,16 +137,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         if (error) throw new Error(error.message);
 
       } else if (action === 'reorder') {
-        // Recebe array de { pid, sortOrder }
+        // Recebe array de { pid, sortOrder } — batch upsert em vez de N queries sequenciais
         const items = req.body.items as Array<{ pid: string; sortOrder: number }>;
         if (!items?.length) return res.status(400).json({ error: 'Missing items' });
 
-        for (const item of items) {
-          await supabase
-            .from('featured_products')
-            .update({ sort_order: item.sortOrder })
-            .eq('pid', item.pid);
-        }
+        const { error: reorderError } = await supabase
+          .from('featured_products')
+          .upsert(
+            items.map(i => ({ pid: i.pid, sort_order: i.sortOrder })),
+            { onConflict: 'pid' }
+          );
+        if (reorderError) throw new Error(reorderError.message);
       }
 
       const { data } = await supabase.from('featured_products').select('pid');

@@ -26,7 +26,7 @@ const sections = [
     content: [
       { label: 'Confirmação', value: 'Email imediato após pagamento' },
       { label: 'Despacho', value: 'Email com número de rastreio em 1–3 dias' },
-      { label: 'Acompanhamento', value: 'Disponível em solaris-drab.vercel.app/tracking' },
+      { label: 'Acompanhamento', value: 'Disponível em solaris.pt/tracking' },
     ],
     note: 'Se não receberes o email de confirmação, verifica a pasta de spam ou contacta-nos.',
   },

@@ -39,6 +39,11 @@ interface Props {
   epSearchInput: string;
   setEpSearchInput: (s: string) => void;
   setEpSearch: (s: string) => void;
+  epCategories: any[];
+  epWareTypeId: string;
+  setEpWareTypeId: (id: string) => void;
+  epSearchMode: 'name' | 'pid';
+  setEpSearchMode: (m: 'name' | 'pid') => void;
   featuredPids: string[];
   saving: string | null;
   toggleFeatured: (product: CJProduct) => void;
@@ -52,6 +57,7 @@ export default function AdminBrowse({
   products, total, loading,
   mhProducts, mhLoading, mhTotal, mhHasMore, mhPage, setMhPage, mhSearchInput, setMhSearchInput, setMhSearch, mhNewOnly, setMhNewOnly,
   epProducts, epLoading, epTotal, epHasMore, epPage, setEpPage, epSearchInput, setEpSearchInput, setEpSearch,
+  epCategories, epWareTypeId, setEpWareTypeId, epSearchMode, setEpSearchMode,
   featuredPids, saving, toggleFeatured, openDetails, handleSearch,
 }: Props) {
   const isMh = activeSupplier === 'matterhorn';
@@ -98,25 +104,35 @@ export default function AdminBrowse({
       <div className="sticky top-[5.5rem] z-40 bg-raw-linen/95 backdrop-blur-sm border-b border-absolute-black/10 px-8 md:px-12 py-4 flex flex-col gap-3">
         <div className="flex flex-wrap gap-3 items-center">
           <form onSubmit={activeForm} className="flex gap-0 border border-absolute-black/20 focus-within:border-absolute-black transition-colors">
-            {!isMh && !isEp && (
+            {/* Toggle Nome/PID — CJ e Eprolo */}
+            {(!isMh) && (
               <button
                 type="button"
-                onClick={() => { setSearchMode(searchMode === 'name' ? 'pid' : 'name'); setPage(1); }}
+                onClick={() => {
+                  if (isEp) setEpSearchMode(epSearchMode === 'name' ? 'pid' : 'name');
+                  else { setSearchMode(searchMode === 'name' ? 'pid' : 'name'); setPage(1); }
+                }}
                 className={`px-3 py-1.5 font-mono text-[11px] tracking-widest uppercase border-r transition-colors shrink-0 ${
-                  searchMode === 'pid'
+                  (isEp ? epSearchMode : searchMode) === 'pid'
                     ? 'bg-solar-yellow text-absolute-black border-solar-yellow/50'
                     : 'bg-absolute-black/5 text-absolute-black/50 border-absolute-black/20 hover:bg-absolute-black/10'
                 }`}
               >
-                {searchMode === 'pid' ? 'PID' : 'Nome'}
+                {(isEp ? epSearchMode : searchMode) === 'pid' ? 'ID' : 'Nome'}
               </button>
             )}
             <input
               type="text"
               value={activeInput}
               onChange={e => setActiveInput(e.target.value)}
-              placeholder={isMh ? 'Pesquisar Matterhorn...' : isEp ? 'Pesquisar Eprolo...' : searchMode === 'pid' ? 'Colar PID...' : 'Pesquisar por nome...'}
-              className="bg-transparent px-3 py-1.5 font-mono text-xs tracking-widest uppercase placeholder:text-absolute-black/40 outline-none w-52"
+              placeholder={
+                isMh ? 'Pesquisar Matterhorn...'
+                : isEp && epSearchMode === 'pid' ? 'Colar URL ou ID do produto Eprolo...'
+                : isEp ? 'Filtrar por nome (na página)...'
+                : searchMode === 'pid' ? 'Colar PID CJ...'
+                : 'Pesquisar por nome...'
+              }
+              className="bg-transparent px-3 py-1.5 font-mono text-xs tracking-widest uppercase placeholder:text-absolute-black/40 outline-none w-64"
             />
             {isMh && mhSearchInput && (
               <button type="button" onClick={() => { setMhSearch(''); setMhSearchInput(''); setMhPage(1); }} className="px-2 text-absolute-black/40 hover:text-red-500 transition-colors font-mono text-[13px]">✕</button>
@@ -127,6 +143,11 @@ export default function AdminBrowse({
             <SfButton type="submit" size="sm" className="!rounded-none !bg-absolute-black !text-stark-white font-mono text-[11px] tracking-widest uppercase !px-4 shrink-0">↵</SfButton>
           </form>
 
+          {isEp && epSearchMode === 'pid' && (
+            <span className="font-mono text-[11px] text-solar-yellow bg-solar-yellow/10 border border-solar-yellow/30 px-2 py-1 tracking-widest">
+              MODO ID
+            </span>
+          )}
           {!isMh && !isEp && searchMode === 'pid' && (
             <span className="font-mono text-[11px] text-solar-yellow bg-solar-yellow/10 border border-solar-yellow/30 px-2 py-1 tracking-widest">
               MODO PID
@@ -163,6 +184,42 @@ export default function AdminBrowse({
               </button>
             ))}
           </div>
+        )}
+
+        {/* Eprolo — category pills (só no modo browse, não no modo ID) */}
+        {isEp && epSearchMode === 'name' && epCategories.length > 0 && (
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setEpWareTypeId('')}
+              className={`font-mono text-[11px] tracking-widest uppercase px-3 py-1.5 border transition-colors ${
+                !epWareTypeId
+                  ? 'bg-absolute-black text-stark-white border-absolute-black'
+                  : 'border-absolute-black/15 text-absolute-black/70 hover:border-absolute-black/50 hover:text-absolute-black'
+              }`}
+            >
+              Todas
+            </button>
+            {epCategories.map((cat: any) => {
+              const id = String(cat.id || cat.wareTypeId || cat.type_id || '');
+              const name = cat.name || cat.typeName || cat.type_name || id;
+              return (
+                <button
+                  key={id}
+                  onClick={() => setEpWareTypeId(epWareTypeId === id ? '' : id)}
+                  className={`font-mono text-[11px] tracking-widest uppercase px-3 py-1.5 border transition-colors ${
+                    epWareTypeId === id
+                      ? 'bg-solar-yellow text-absolute-black border-solar-yellow'
+                      : 'border-absolute-black/15 text-absolute-black/70 hover:border-absolute-black/50 hover:text-absolute-black'
+                  }`}
+                >
+                  {name}
+                </button>
+              );
+            })}
+          </div>
+        )}
+        {isEp && epSearchMode === 'name' && epCategories.length === 0 && (
+          <p className="font-mono text-[11px] text-absolute-black/40 tracking-widest">A carregar categorias...</p>
         )}
       </div>
 

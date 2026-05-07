@@ -19,6 +19,8 @@ export default function CookieConsent() {
   const accept = () => {
     localStorage.setItem('solaris-cookie-consent', 'accepted');
     setVisible(false);
+    // Notifica App para inicializar analytics agora
+    window.dispatchEvent(new Event('solaris-cookie-accepted'));
   };
 
   const reject = () => {

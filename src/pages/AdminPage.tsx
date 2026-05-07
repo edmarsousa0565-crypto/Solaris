@@ -54,6 +54,9 @@ export default function AdminPage() {
   const [epPage, setEpPage] = useState(1);
   const [epSearch, setEpSearch] = useState('');
   const [epSearchInput, setEpSearchInput] = useState('');
+  const [epCategories, setEpCategories] = useState<any[]>([]);
+  const [epWareTypeId, setEpWareTypeId] = useState<string>('');
+  const [epSearchMode, setEpSearchMode] = useState<'name' | 'pid'>('name');
 
   const [orders, setOrders] = useState<any[]>([]);
   const [metrics, setMetrics] = useState<any>(null);
@@ -77,6 +80,8 @@ export default function AdminPage() {
   const [customCollection, setCustomCollection] = useState('');
   const [customShipping, setCustomShipping] = useState('');
   const [customVariantNames, setCustomVariantNames] = useState<Record<string, string>>({});
+  const [customSizeChart, setCustomSizeChart] = useState('clothing');
+  const [customMaterials, setCustomMaterials] = useState('');
   const [editingVid, setEditingVid] = useState<string | null>(null);
   const [variantFilter, setVariantFilter] = useState<'all' | string>('all');
   const [uploading, setUploading] = useState(false);
@@ -249,22 +254,64 @@ export default function AdminPage() {
       .finally(() => setMhLoading(false));
   }, [authed, tab, activeSupplier, mhPage, mhSearch, mhNewOnly]);
 
+  // Carrega categorias Eprolo (level 1) uma vez quando se entra na aba Eprolo
+  useEffect(() => {
+    if (!authed || tab !== 'browse' || activeSupplier !== 'eprolo' || epCategories.length > 0) return;
+    fetch('/api/eprolo?action=categories&level=1')
+      .then(r => r.json())
+      .then(d => {
+        const cats = Array.isArray(d.categories) ? d.categories : [];
+        setEpCategories(cats);
+      })
+      .catch(() => {});
+  }, [authed, tab, activeSupplier, epCategories.length]);
+
   useEffect(() => {
     if (!authed || tab !== 'browse' || activeSupplier !== 'eprolo') return;
     setEpLoading(true);
-    const q = epSearch.trim().toLowerCase();
-    fetch(`/api/eprolo?action=products&pageNum=${epPage}&pageSize=20&page_index=${epPage - 1}&page_size=20`)
+    const q = epSearch.trim();
+
+    // Modo PID — aceita URL completo ou só o ID numérico
+    if (epSearchMode === 'pid' && q) {
+      // Extrai ID de URLs como: eprolo.com/app/mproductdetail.html?id=12345
+      let productId = q;
+      try {
+        const urlMatch = q.match(/[?&]id=(\d+)/);
+        if (urlMatch) productId = urlMatch[1];
+      } catch { /* usa q directamente */ }
+      fetch(`/api/eprolo?action=product&id=${encodeURIComponent(productId)}&countrycode=PT`)
+        .then(r => r.json())
+        .then(d => {
+          const p = d.product;
+          if (p) { setEpProducts([p]); setEpTotal(1); setEpHasMore(false); }
+          else { setEpProducts([]); setEpTotal(0); }
+        })
+        .catch(() => { setEpProducts([]); setEpTotal(0); })
+        .finally(() => setEpLoading(false));
+      return;
+    }
+
+    // Modo catálogo — browse por categoria + filtro local por nome
+    const ql = q.toLowerCase();
+    const params = new URLSearchParams({
+      pageNum: String(epPage),
+      pageSize: '50',
+      page_index: String(epPage - 1),
+      page_size: '50',
+    });
+    if (epWareTypeId) params.set('wareTypeId', epWareTypeId);
+    fetch(`/api/eprolo?action=products&${params}`)
       .then(r => r.json())
       .then(d => {
         const all: any[] = d.products || [];
-        const filtered = q ? all.filter((p: any) => (p.name || '').toLowerCase().includes(q)) : all;
+        const filtered = ql ? all.filter((p: any) => (p.name || '').toLowerCase().includes(ql)) : all;
         setEpProducts(filtered);
         setEpTotal(filtered.length);
-        setEpHasMore(!q && !!d.hasMore);
+        setEpHasMore(!ql && !!d.hasMore);
       })
       .catch(() => { setEpProducts([]); setEpTotal(0); })
       .finally(() => setEpLoading(false));
-  }, [authed, tab, activeSupplier, epPage, epSearch]);
+  }, [authed, tab, activeSupplier, epPage, epSearch, epWareTypeId, epSearchMode]);
 
   const reorderProduct = async (pid: string, direction: 'up' | 'down') => {
     const sorted = [...featuredProducts].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
@@ -342,6 +389,8 @@ export default function AdminPage() {
             excludedImages: excludedImages.length > 0 ? excludedImages : [],
             extraImages: customExtraImages.length > 0 ? customExtraImages : [],
             supplier: (product as any).supplier || 'cj',
+            sizeChartType: customSizeChart || 'clothing',
+            materialsInfo: customMaterials || undefined,
           },
         }),
       }));
@@ -406,10 +455,13 @@ export default function AdminPage() {
       setCustomVariantNames((existing as any).variantNames || {});
       setExcludedImages((existing as any).excludedImages || []);
       setCustomExtraImages((existing as any).extraImages || []);
+      setCustomSizeChart((existing as any).sizeChartType || 'clothing');
+      setCustomMaterials((existing as any).materialsInfo || '');
     } else {
       setCustomName(''); setCustomDesc(''); setCustomImage(''); setCustomPrice('');
       setCustomCollection(''); setCustomShipping(''); setCustomVariantNames({});
       setExcludedImages([]); setCustomExtraImages([]);
+      setCustomSizeChart('clothing'); setCustomMaterials('');
     }
 
     setShippingMethods([]);
@@ -420,7 +472,7 @@ export default function AdminPage() {
       const url = supplier === 'matterhorn'
         ? `/api/matterhorn?action=product&id=${product.cjPid}&includeShipping=true&country=PT`
         : supplier === 'eprolo'
-        ? `/api/eprolo?action=product&id=${product.cjPid}&variantId=${firstVid}`
+        ? `/api/eprolo?action=product&id=${product.cjPid}&variantId=${firstVid}&countrycode=PT`
         : `/api/cj?action=product&pid=${product.cjPid}&includeShipping=true&country=PT`;
       const res = await fetch(url);
       const data = await res.json();
@@ -454,6 +506,7 @@ export default function AdminPage() {
     setCustomName(''); setCustomDesc(''); setCustomImage(''); setCustomPrice('');
     setCustomCollection(''); setCustomShipping(''); setCustomVariantNames({});
     setExcludedImages([]); setCustomExtraImages([]);
+    setCustomSizeChart('clothing'); setCustomMaterials('');
     setEditingVid(null);
     setShippingMethods([]);
     setPreviewImage('');
@@ -590,6 +643,11 @@ export default function AdminPage() {
             epSearchInput={epSearchInput}
             setEpSearchInput={setEpSearchInput}
             setEpSearch={setEpSearch}
+            epCategories={epCategories}
+            epWareTypeId={epWareTypeId}
+            setEpWareTypeId={(id: string) => { setEpWareTypeId(id); setEpPage(1); }}
+            epSearchMode={epSearchMode}
+            setEpSearchMode={(m: 'name' | 'pid') => { setEpSearchMode(m); setEpSearch(''); setEpSearchInput(''); setEpPage(1); }}
             featuredPids={featuredPids}
             saving={saving}
             toggleFeatured={toggleFeatured}
@@ -670,6 +728,10 @@ export default function AdminPage() {
         setCustomShipping={setCustomShipping}
         customVariantNames={customVariantNames}
         setCustomVariantNames={setCustomVariantNames}
+        customSizeChart={customSizeChart}
+        setCustomSizeChart={setCustomSizeChart}
+        customMaterials={customMaterials}
+        setCustomMaterials={setCustomMaterials}
         editingVid={editingVid}
         setEditingVid={setEditingVid}
         uploading={uploading}

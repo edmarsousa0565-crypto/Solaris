@@ -1,8 +1,7 @@
 User-agent: *
 Allow: /
 
-# Bloquear rotas que não interessam ser indexadas diretamente se existirem
+Disallow: /admin
 Disallow: /api/
-Disallow: /admin/
 
-Sitemap: https://solaris-drab.vercel.app/sitemap.xml
+Sitemap: https://sollaris.pt/sitemap.xml

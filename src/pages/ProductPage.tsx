@@ -387,14 +387,16 @@ export default function ProductPage() {
 
                 {/* WhatsApp + Trust Signals */}
                 <div className="flex flex-col gap-3">
-                  <a
-                    href="https://wa.me/351910000000?text=Olá!%20Tenho%20uma%20dúvida%20sobre%20este%20produto."
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-3 border border-absolute-black/15 font-mono text-[11px] tracking-[0.3em] uppercase py-3.5 px-6 text-absolute-black/90 hover:bg-absolute-black hover:text-stark-white transition-colors duration-300"
-                  >
-                    Dúvidas? WhatsApp
-                  </a>
+                  {import.meta.env.VITE_WHATSAPP_NUMBER && (
+                    <a
+                      href={`https://wa.me/${import.meta.env.VITE_WHATSAPP_NUMBER}?text=Ol%C3%A1!%20Tenho%20uma%20d%C3%BAvida%20sobre%20este%20produto.`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-3 border border-absolute-black/15 font-mono text-[11px] tracking-[0.3em] uppercase py-3.5 px-6 text-absolute-black/90 hover:bg-absolute-black hover:text-stark-white transition-colors duration-300"
+                    >
+                      Dúvidas? WhatsApp
+                    </a>
+                  )}
                   <div className="grid grid-cols-3 gap-2 px-1">
                     <div className="flex items-center gap-1">
                       <span className="text-oxidized-gold text-[11px]" aria-hidden="true">&#10055;</span>

@@ -1,13 +1,10 @@
 // /api/cj?action=products|product  —  POST /api/cj → cria encomenda
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
 import { getCJToken, CJ_BASE_URL } from './_auth';
+import { getSupabaseAdmin } from '../_supabase';
 
 function getSupabase() {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-  if (!url || !key) return null;
-  return createClient(url, key, { db: { schema: 'api' } });
+  try { return getSupabaseAdmin(); } catch { return null; }
 }
 
 // ─── Products list ────────────────────────────────────────────────────────────

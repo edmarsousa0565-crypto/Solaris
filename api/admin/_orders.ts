@@ -5,16 +5,9 @@
 // POST /api/admin/orders?action=refund — emitir reembolso total ou parcial
 //      body: { stripeSessionId, amount?, reason? }
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createClient } from '@supabase/supabase-js';
 import { requireAuth } from './_auth';
 import Stripe from 'stripe';
-
-function getSupabase() {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error('SUPABASE_NOT_CONFIGURED');
-  return createClient(url, key, { db: { schema: 'api' } });
-}
+import { getSupabaseAdmin as getSupabase } from '../_supabase';
 
 function csvEscape(value: any): string {
   if (value == null) return '';

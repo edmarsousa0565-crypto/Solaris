@@ -3,8 +3,8 @@
 //   checkout.session.completed → cria encomenda CJ + guarda Supabase + email confirmação
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
-import { createClient } from '@supabase/supabase-js';
 import { createCJOrder, createMatterhornOrder, createEproloOrder } from './_suppliers';
+import { getSupabaseAdmin as getSupabase } from '../_supabase';
 
 // ─── Clientes ────────────────────────────────────────────────────────────────
 
@@ -12,13 +12,6 @@ function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error('STRIPE_SECRET_KEY não configurada');
   return new Stripe(key, { apiVersion: '2023-10-16' });
-}
-
-function getSupabase() {
-  const url  = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key  = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error('Supabase não configurado');
-  return createClient(url, key, { db: { schema: 'api' } });
 }
 
 // ─── Enviar email de confirmação ──────────────────────────────────────────────
@@ -48,7 +41,7 @@ async function sendConfirmationEmail(session: Stripe.Checkout.Session, orderNumb
 
   const res = await fetch(`${baseUrl}/api/email/send`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.INTERNAL_API_SECRET || '' },
     body: JSON.stringify({
       type: 'order-confirmation',
       data: {
@@ -96,7 +89,7 @@ async function sendAdminNotification(session: Stripe.Checkout.Session, orderNumb
 
   await fetch(`${baseUrl}/api/email/send`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.INTERNAL_API_SECRET || '' },
     body: JSON.stringify({
       type: 'admin-order-notification',
       data: {
@@ -239,7 +232,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log(`✓ Encomenda ${orderNumber} processada | CJ: ${cjOrderId} | Matterhorn: ${matterhornOrderId} | Eprolo: ${eproloOrderId}`);
     } catch (err: any) {
       console.error('Error processing order:', err);
-      // Não devolvemos erro ao Stripe para evitar retry — o erro foi logado
+      // Tenta guardar registo de falha total para o admin saber
+      try {
+        const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
+          ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+          : process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null;
+        if (baseUrl) {
+          fetch(`${baseUrl}/api/email/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-internal-secret': process.env.INTERNAL_API_SECRET || '' },
+            body: JSON.stringify({
+              type: 'admin-order-notification',
+              data: {
+                orderNumber: `SOL-${session.id.slice(-8).toUpperCase()} [FALHA CRÍTICA]`,
+                customerName: session.customer_details?.name || 'Desconhecido',
+                customerEmail: session.customer_details?.email || session.customer_email || '',
+                total: `€${((session.amount_total || 0) / 100).toFixed(2)}`,
+                items: [{ name: `ERRO: ${err.message}`, price: '—', quantity: 1 }],
+                shippingAddress: { name: '', line1: '', city: '', postalCode: '', country: '' },
+                cjOrderId: null,
+              },
+            }),
+          }).catch(() => {});
+        }
+      } catch { /* silent */ }
     }
   }
 

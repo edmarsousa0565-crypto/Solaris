@@ -6,16 +6,9 @@
 // Assinatura: header md5sign = MD5(rawBody + sign_key)
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import crypto from 'crypto';
-import { createClient } from '@supabase/supabase-js';
+import { getSupabaseAdmin as getSupabase } from '../_supabase';
 
 export const config = { api: { bodyParser: false } };
-
-function getSupabase() {
-  const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-  if (!url || !key) throw new Error('Supabase não configurado');
-  return createClient(url, key, { db: { schema: 'api' } });
-}
 
 // ─── type=0: Order shipped ────────────────────────────────────────────────────
 

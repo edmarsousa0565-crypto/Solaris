@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { motion } from 'motion/react';
 import gsap from 'gsap';
@@ -20,18 +20,32 @@ export default function ShopPage() {
   const cartItems = useCartStore(state => state.items);
   const setIsOpen = useCartStore(state => state.setIsOpen);
   const [search, setSearch] = useState('');
+  const [urlParams, setUrlParams] = useSearchParams();
 
   const [sort, setSort] = useState<SortOption>('default');
+  const [activeCollection, setActiveCollection] = useState<string | null>(() => urlParams.get('collection'));
 
   const headerRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
 
   const { products: allProducts, loading } = useFeaturedProducts();
 
-  // Filtro por pesquisa local
-  const filtered = allProducts.filter(p =>
-    !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase())
-  );
+  // Coleções disponíveis (derivadas dos produtos reais)
+  const allCollections = Array.from(new Set(allProducts.map(p => p.collection).filter(Boolean))) as string[];
+
+  // Sync URL param → state
+  const setCollection = (col: string | null) => {
+    setActiveCollection(col);
+    if (col) setUrlParams({ collection: col }, { replace: true });
+    else setUrlParams({}, { replace: true });
+  };
+
+  // Filtro por coleção + pesquisa local
+  const filtered = allProducts.filter(p => {
+    const matchesCollection = !activeCollection || p.collection === activeCollection;
+    const matchesSearch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase());
+    return matchesCollection && matchesSearch;
+  });
 
   // Ordenação local
   const sorted = [...filtered].sort((a, b) => {
@@ -54,7 +68,7 @@ export default function ShopPage() {
       <meta name="description" content="Descobre a coleção SOLARIS — peças femininas para o verão, com design intemporal e materiais de qualidade. Envio para Portugal, Brasil e Europa." />
       <meta property="og:title" content="Loja SOLARIS — Moda Feminina Verão 2025" />
       <meta property="og:description" content="Peças femininas para o verão. Envio para Portugal, Brasil e Europa." />
-      <meta property="og:url" content="https://solaris-drab.vercel.app/shop" />
+      <meta property="og:url" content={`${import.meta.env.VITE_APP_URL || 'https://solaris.pt'}/shop`} />
     </Helmet>
     <div className="min-h-screen bg-raw-linen text-absolute-black">
       {/* Header fixo */}
@@ -78,7 +92,7 @@ export default function ShopPage() {
             Solaris — Shop
           </p>
           <h1 ref={titleRef} className="font-serif italic text-[clamp(3rem,8vw,7rem)] font-light tracking-wide leading-none mb-8">
-            {loading ? 'Coleção' : `${allProducts.length} peças`}
+            {loading ? 'Coleção' : activeCollection ? activeCollection : `${allProducts.length} peças`}
           </h1>
 
           {/* Pesquisa + ordenação */}
@@ -100,6 +114,35 @@ export default function ShopPage() {
               <option value="price-desc">Preço: Maior</option>
             </select>
           </div>
+
+          {/* Collection pills — só aparece se houver coleções definidas */}
+          {allCollections.length > 0 && (
+            <div className="flex gap-2 flex-wrap mt-6">
+              <button
+                onClick={() => setCollection(null)}
+                className={`font-mono text-[13px] tracking-[0.3em] uppercase px-4 py-2 border transition-colors ${
+                  activeCollection === null
+                    ? 'bg-absolute-black text-solar-yellow border-absolute-black'
+                    : 'border-absolute-black/30 text-absolute-black/60 hover:border-absolute-black/60 hover:text-absolute-black'
+                }`}
+              >
+                Todas
+              </button>
+              {allCollections.map(col => (
+                <button
+                  key={col}
+                  onClick={() => setCollection(activeCollection === col ? null : col)}
+                  className={`font-mono text-[13px] tracking-[0.3em] uppercase px-4 py-2 border transition-colors ${
+                    activeCollection === col
+                      ? 'bg-absolute-black text-solar-yellow border-absolute-black'
+                      : 'border-absolute-black/30 text-absolute-black/60 hover:border-absolute-black/60 hover:text-absolute-black'
+                  }`}
+                >
+                  {col}
+                </button>
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Grelha de produtos */}
@@ -117,17 +160,17 @@ export default function ShopPage() {
           ) : sorted.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-32 gap-4">
               <p className="font-serif italic text-4xl text-absolute-black/70 font-light">
-                {search ? 'Sem resultados' : 'Em breve'}
+                {search || activeCollection ? 'Sem resultados' : 'Em breve'}
               </p>
               <p className="font-mono text-xs text-absolute-black/90 tracking-widest uppercase">
-                {search ? 'Tenta outra pesquisa' : 'Novos produtos a caminho'}
+                {search || activeCollection ? 'Tenta outra pesquisa' : 'Novos produtos a caminho'}
               </p>
-              {search && (
+              {(search || activeCollection) && (
                 <button
-                  onClick={() => setSearch('')}
+                  onClick={() => { setSearch(''); setCollection(null); }}
                   className="font-mono text-[13px] tracking-[0.3em] uppercase text-absolute-black/70 hover:text-absolute-black transition-colors border-b border-absolute-black/20 pb-1 mt-2"
                 >
-                  Limpar pesquisa
+                  Limpar filtros
                 </button>
               )}
             </div>
@@ -205,9 +248,17 @@ function ProductTile({ product, index, onAddToCart }: { product: CJProduct; inde
           <span className="font-mono text-xs tracking-widest uppercase text-absolute-black truncate">{product.name}</span>
           <span className="font-mono text-xs text-absolute-black/80 shrink-0">{product.price}</span>
         </div>
-        <span className="font-mono text-[13px] tracking-wider uppercase text-absolute-black/90">
-          {product.category}
-        </span>
+        <div className="flex items-center gap-2">
+          {product.collection && product.collection !== 'Solaris' && (
+            <span className="font-mono text-[11px] tracking-wider uppercase text-oxidized-gold/80">{product.collection}</span>
+          )}
+          {product.collection && product.collection !== 'Solaris' && (
+            <span className="text-absolute-black/20 text-[11px]">·</span>
+          )}
+          <span className="font-mono text-[13px] tracking-wider uppercase text-absolute-black/90">
+            {product.category}
+          </span>
+        </div>
       </Link>
     </motion.div>
   );

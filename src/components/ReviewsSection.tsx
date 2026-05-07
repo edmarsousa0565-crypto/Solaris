@@ -121,7 +121,7 @@ export default function ReviewsSection() {
               ))}
             </div>
             <p className="font-mono text-[13px] tracking-[0.3em] uppercase text-absolute-black/70">
-              4.9 / 5 · 127 reviews
+              4.9 / 5 · Opiniões ilustrativas
             </p>
           </div>
         </div>
@@ -166,8 +166,8 @@ export default function ReviewsSection() {
                   {review.location}
                 </span>
               </div>
-              <span className="ml-auto font-mono text-[11px] tracking-wider text-absolute-black/60 flex items-center gap-1">
-                <span aria-hidden="true">✓</span> Verificada
+              <span className="ml-auto font-mono text-[11px] tracking-wider text-absolute-black/40 flex items-center gap-1">
+                Cliente SOLARIS
               </span>
             </div>
           </div>
